@@ -95,11 +95,12 @@ Orchestration lives in `src/server/dreams/service.ts` — keep React components 
 
 When a person is marked `isRealPerson: true`, the UI prompts for an optional photo. Uploaded URLs are passed as `referenceImages` into `DreamImageProvider.generateDreamImage`. If your image API supports identity / IP-adapter / reference images, map them there. If not, ignore the array until the vendor supports it.
 
-## Demo behavior
+## Image generation
 
-Until keys are set, mocks:
+Uses **`gpt-image-1`** when `AI_IMAGE_API_KEY` or `AI_API_KEY` is set.
 
-1. Transcribe any audio into the childhood-neighborhood sample dream
-2. Detect “my ex” as a real person
-3. Trigger the reference-photo step
-4. Return cinematic SVG placeholders as generated images
+Implementation: `src/lib/ai/providers/openai-image.ts`
+
+Generated PNGs are saved under `.data/uploads/images/` and served through `/api/media/...`.
+
+If no image key is configured, the mock placeholder SVGs are used instead.

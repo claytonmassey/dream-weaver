@@ -7,7 +7,7 @@ export type ConversationMessage = {
 
 export type ConversationTurnResult = {
   message: string;
-  /** True when enough detail has been gathered to enter the design phase */
+  /** True when enough detail has been gathered to review / generate */
   readyForDesign: boolean;
   /** Dream text enriched with answers from the conversation */
   enrichedTranscript: string;

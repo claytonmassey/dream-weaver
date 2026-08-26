@@ -11,6 +11,7 @@ import {
 } from "@/lib/ai/providers/mock";
 import { MockDreamImageProvider } from "@/lib/ai/providers/mock-image";
 import { OpenAIAnalysisProvider } from "@/lib/ai/providers/openai-analysis";
+import { OpenAIImageProvider } from "@/lib/ai/providers/openai-image";
 import { OpenAITranscriptionProvider } from "@/lib/ai/providers/openai-transcription";
 import type {
   DreamAnalysisProvider,
@@ -30,6 +31,14 @@ function analysisKey(): string | undefined {
   return process.env.AI_API_KEY || process.env.AI_TRANSCRIPTION_API_KEY || undefined;
 }
 
+function imageKey(): string | undefined {
+  return (
+    process.env.AI_IMAGE_API_KEY ||
+    process.env.AI_API_KEY ||
+    undefined
+  );
+}
+
 export function getTranscriptionProvider(): TranscriptionProvider {
   const key = transcriptionKey();
   if (key) {
@@ -47,8 +56,10 @@ export function getDreamAnalysisProvider(): DreamAnalysisProvider {
 }
 
 export function getDreamImageProvider(): DreamImageProvider {
-  // Image generation stays mocked until a dedicated image provider is wired.
-  void process.env.AI_IMAGE_API_KEY;
+  const key = imageKey();
+  if (key) {
+    return new OpenAIImageProvider(key);
+  }
   return new MockDreamImageProvider();
 }
 

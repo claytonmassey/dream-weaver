@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const converseRequestSchema = z.object({
-  transcript: z.string().min(1),
+  transcript: z.string().default(""),
   history: z
     .array(
       z.object({
@@ -31,6 +31,10 @@ export async function POST(request: Request) {
     console.error("Conversation error:", error);
     const message =
       error instanceof Error ? error.message : "Conversation failed.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const friendly =
+      message.includes("Too small") || message.includes("enrichedTranscript")
+        ? "Couldn't start the chat. Try again."
+        : message;
+    return NextResponse.json({ error: friendly }, { status: 500 });
   }
 }

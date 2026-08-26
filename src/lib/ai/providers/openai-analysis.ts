@@ -15,8 +15,8 @@ import { z } from "zod";
 
 const conversationResultSchema = z.object({
   message: z.string().min(1),
-  readyForDesign: z.boolean(),
-  enrichedTranscript: z.string().min(1),
+  readyForDesign: z.boolean().default(false),
+  enrichedTranscript: z.string().default(""),
 });
 
 /**
@@ -62,7 +62,7 @@ export class OpenAIAnalysisProvider implements DreamAnalysisProvider {
         { role: "system", content: DREAM_CONVERSATION_SYSTEM_PROMPT },
         {
           role: "user",
-          content: `Original dream:\n${input.transcript}\n\nConversation so far:\n${historyText}\n\nContinue the conversation. Return JSON only.`,
+          content: `Dream so far (may be empty if just starting):\n${input.transcript.trim() || "(nothing yet)"}\n\nConversation so far:\n${historyText}\n\nContinue the conversation. Return JSON only.`,
         },
       ],
     });
@@ -73,10 +73,12 @@ export class OpenAIAnalysisProvider implements DreamAnalysisProvider {
     }
 
     const parsed = conversationResultSchema.parse(JSON.parse(raw));
+    const enriched =
+      parsed.enrichedTranscript.trim() || input.transcript.trim() || "";
     return {
       message: parsed.message,
-      readyForDesign: parsed.readyForDesign,
-      enrichedTranscript: parsed.enrichedTranscript || input.transcript,
+      readyForDesign: Boolean(parsed.readyForDesign && enriched),
+      enrichedTranscript: enriched,
     };
   }
 

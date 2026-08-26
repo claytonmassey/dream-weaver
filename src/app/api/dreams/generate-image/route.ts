@@ -3,6 +3,9 @@ import { serviceGenerateDreamImage } from "@/server/dreams/service";
 import { generateImageRequestSchema } from "@/types/validation";
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
+export const maxDuration = 120;
+
 export async function POST(request: Request) {
   const authResult = await requireUserId();
   if ("error" in authResult) return authResult.error;
@@ -18,12 +21,11 @@ export async function POST(request: Request) {
     );
     return NextResponse.json({ dream });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        error: "Image generation failed. Your dream was saved — you can retry.",
-      },
-      { status: 500 },
-    );
+    console.error("Image generation error:", error);
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Image generation failed. Your dream was saved — you can retry.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

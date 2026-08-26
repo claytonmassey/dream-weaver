@@ -208,7 +208,7 @@ export const localDb = {
         dreamId: dream.id,
         kind: "image",
         url: imageUrl,
-        mimeType: "image/svg+xml",
+        mimeType: imageUrl.endsWith(".svg") ? "image/svg+xml" : "image/png",
         createdAt: new Date().toISOString(),
       });
     }

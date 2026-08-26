@@ -226,8 +226,9 @@ export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
 
     if (userTurns === 0) {
       return {
-        message:
-          "I can almost see it. Was the light more blue and cold, or warm like that orange moon?",
+        message: input.transcript.trim()
+          ? "Beautiful. What was happening there?"
+          : "Hi, I'm Dreamline ✨ Let's capture your dream. What's the first thing you remember?",
         readyForDesign: false,
         enrichedTranscript: input.transcript,
       };
@@ -236,10 +237,9 @@ export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
     if (userTurns === 1) {
       const answer = input.history[input.history.length - 1]?.content ?? "";
       return {
-        message:
-          "Got it. Was anyone else nearby, or did it feel like just the two of you on that street?",
+        message: "What was the mood or feeling of the dream?",
         readyForDesign: false,
-        enrichedTranscript: `${input.transcript}\n\nAlso: ${answer}`.trim(),
+        enrichedTranscript: [input.transcript, answer].filter(Boolean).join("\n\n"),
       };
     }
 
@@ -250,9 +250,9 @@ export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
 
     return {
       message:
-        "That gives me enough to start painting. Choose a style and I'll begin.",
+        "Thanks, I've captured your dream. Here's your transcript so far ✨",
       readyForDesign: true,
-      enrichedTranscript: `${input.transcript}\n\nMore detail: ${extras}`.trim(),
+      enrichedTranscript: [input.transcript, extras].filter(Boolean).join("\n\n"),
     };
   }
 }
