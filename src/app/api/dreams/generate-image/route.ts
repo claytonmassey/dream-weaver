@@ -116,18 +116,31 @@ export async function POST(request: Request) {
     );
 
     const userId = authResult.userId;
-    after(async () => {
-      try {
-        await serviceGenerateDreamImage(
-          userId,
-          parsed.dreamId,
-          parsed.style,
-          parsed.referenceImageUrls,
-        );
-      } catch (error) {
-        console.error("Background image generation error:", error);
-      }
-    });
+    try {
+      after(async () => {
+        try {
+          await serviceGenerateDreamImage(
+            userId,
+            parsed.dreamId,
+            parsed.style,
+            parsed.referenceImageUrls,
+          );
+        } catch (error) {
+          console.error("Background image generation error:", error);
+        }
+      });
+    } catch (error) {
+      // Some runtimes reject after() — fall back to inline generation.
+      console.error("after() unavailable, running inline:", error);
+      await serviceGenerateDreamImage(
+        userId,
+        parsed.dreamId,
+        parsed.style,
+        parsed.referenceImageUrls,
+      );
+      const dream = await dreamRepository.get(userId, parsed.dreamId);
+      return NextResponse.json({ ok: true, pending: false, dream });
+    }
 
     return NextResponse.json({
       ok: true,

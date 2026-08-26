@@ -25,7 +25,6 @@ function sessionCookieOptions(req: NextRequest) {
   if (req.cookies.has("authjs.session-token")) {
     return { secureCookie: false as const };
   }
-  // No cookie yet — infer from request (production / HTTPS).
   const secure =
     req.nextUrl.protocol === "https:" ||
     process.env.AUTH_URL?.startsWith("https://") === true ||
@@ -34,7 +33,6 @@ function sessionCookieOptions(req: NextRequest) {
 }
 
 export async function middleware(req: NextRequest) {
-  // Opt-in demo mode skips forced login for local prototyping only.
   if (process.env.DEMO_MODE === "true") {
     return NextResponse.next();
   }
@@ -55,6 +53,10 @@ export async function middleware(req: NextRequest) {
   });
 
   if (!token) {
+    // APIs must return JSON 401 — redirecting to /login breaks fetch() callers.
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const login = new URL("/login", req.nextUrl.origin);
     login.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(login);

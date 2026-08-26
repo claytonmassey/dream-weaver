@@ -18,6 +18,16 @@ export async function POST(request: Request) {
   const authResult = await requireUserId();
   if ("error" in authResult) return authResult.error;
 
+  if (process.env.VERCEL === "1" && process.env.DEMO_STORE === "true") {
+    return NextResponse.json(
+      {
+        error:
+          "DEMO_STORE must be false on Vercel (dreams were saving to ephemeral memory, which causes 404s).",
+      },
+      { status: 500 },
+    );
+  }
+
   try {
     const body = await request.json();
     const parsed = createDreamRequestSchema.parse(body);

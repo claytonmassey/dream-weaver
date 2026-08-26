@@ -319,21 +319,25 @@ export function DreamComposer() {
       });
 
       if (!imageRes.ok) {
+        let message =
+          "Painting failed, but your dream was saved. Open it from Home and retry.";
         try {
           const errBody = (await imageRes.json()) as {
             error?: string;
             diagnostics?: Record<string, unknown>;
           };
-          const bits = [errBody.error, errBody.diagnostics && JSON.stringify(errBody.diagnostics)]
-            .filter(Boolean)
-            .join(" ");
-          if (bits) {
-            sessionStorage.setItem(`dream-image-error:${dream.id}`, bits);
+          if (errBody.error) {
+            message = errBody.error;
+            if (errBody.diagnostics) {
+              message += ` [${JSON.stringify(errBody.diagnostics)}]`;
+            }
           }
         } catch {
-          // ignore parse errors
+          // non-JSON (HTML redirect / platform error)
+          message = `Painting failed (HTTP ${imageRes.status}). Check Vercel env: DEMO_STORE=false, AI_IMAGE_API_KEY, BLOB_READ_WRITE_TOKEN.`;
         }
-        router.push(`/dream/${dream.id}?imageFailed=1`);
+        setError(message);
+        setStep("error");
         return;
       }
 
@@ -425,7 +429,9 @@ export function DreamComposer() {
   if (step === "error") {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-[var(--text-muted)]">{error}</p>
+        <p className="whitespace-pre-wrap text-sm text-[var(--danger)]">
+          {error}
+        </p>
         <div className="flex gap-3">
           {savedDreamId && (
             <button
