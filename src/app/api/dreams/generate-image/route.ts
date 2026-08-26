@@ -4,17 +4,36 @@ import { blobToken } from "@/lib/storage";
 import { serviceGenerateDreamImage } from "@/server/dreams/service";
 import { generateImageRequestSchema } from "@/types/validation";
 import { after, NextResponse } from "next/server";
+import { ZodError } from "zod";
 
 export const runtime = "nodejs";
 /** gpt-image-1 often takes 30–60s; keep this high on Pro / Fluid. */
 export const maxDuration = 120;
 
+function envDiagnostics() {
+  return {
+    hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+    hasBlobToken: Boolean(
+      process.env.BLOB_READ_WRITE_TOKEN || process.env.STORAGE_TOKEN,
+    ),
+    hasAiImageKey: Boolean(
+      process.env.AI_IMAGE_API_KEY || process.env.AI_API_KEY,
+    ),
+    demoStore: process.env.DEMO_STORE ?? "(unset)",
+    demoMode: process.env.DEMO_MODE ?? "(unset)",
+    useVercelBlob: process.env.USE_VERCEL_BLOB ?? "(unset)",
+    vercel: process.env.VERCEL === "1",
+  };
+}
+
 function imageErrorMessage(error: unknown): string {
+  if (error instanceof ZodError) {
+    return "Invalid image request.";
+  }
   if (error && typeof error === "object") {
     const e = error as {
       message?: string;
       error?: { message?: string };
-      status?: number;
     };
     if (e.error?.message) return e.error.message;
     if (typeof e.message === "string" && e.message) return e.message;
@@ -27,27 +46,65 @@ export async function POST(request: Request) {
   const authResult = await requireUserId();
   if ("error" in authResult) return authResult.error;
 
-  try {
-    const body = await request.json();
-    const parsed = generateImageRequestSchema.parse(body);
+  const diagnostics = envDiagnostics();
 
-    // Fail fast before kicking off a long OpenAI call.
-    if (process.env.VERCEL === "1" && !blobToken()) {
+  try {
+    if (process.env.DEMO_STORE === "true") {
       return NextResponse.json(
         {
           error:
-            "BLOB_READ_WRITE_TOKEN is missing on Vercel. Open Storage → Blob, then copy the token into Project Settings → Environment Variables (Production) and redeploy. You do not need a custom blob route — /api/media already serves private files.",
+            "DEMO_STORE is true on Vercel. Set DEMO_STORE=false so dreams use Postgres.",
+          diagnostics,
         },
         { status: 500 },
       );
     }
+
+    if (process.env.USE_VERCEL_BLOB === "false") {
+      return NextResponse.json(
+        {
+          error:
+            "USE_VERCEL_BLOB is false on Vercel. Set it to true (or remove it) so images save to Blob.",
+          diagnostics,
+        },
+        { status: 500 },
+      );
+    }
+
+    if (!blobToken()) {
+      return NextResponse.json(
+        {
+          error:
+            "BLOB_READ_WRITE_TOKEN is missing. Add it under Vercel → Settings → Environment Variables, then redeploy.",
+          diagnostics,
+        },
+        { status: 500 },
+      );
+    }
+
+    if (!process.env.AI_IMAGE_API_KEY && !process.env.AI_API_KEY) {
+      return NextResponse.json(
+        {
+          error:
+            "AI_IMAGE_API_KEY (or AI_API_KEY) is missing on Vercel. Add your OpenAI key, then redeploy.",
+          diagnostics,
+        },
+        { status: 500 },
+      );
+    }
+
+    const body = await request.json();
+    const parsed = generateImageRequestSchema.parse(body);
 
     const existing = await dreamRepository.get(
       authResult.userId,
       parsed.dreamId,
     );
     if (!existing) {
-      return NextResponse.json({ error: "Dream not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Dream not found", diagnostics },
+        { status: 404 },
+      );
     }
 
     // Mark pending and return immediately — waiting inline times out on Vercel.
@@ -80,7 +137,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Image generation error:", error);
     return NextResponse.json(
-      { error: imageErrorMessage(error) },
+      { error: imageErrorMessage(error), diagnostics },
       { status: 500 },
     );
   }

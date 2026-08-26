@@ -320,12 +320,15 @@ export function DreamComposer() {
 
       if (!imageRes.ok) {
         try {
-          const errBody = (await imageRes.json()) as { error?: string };
-          if (errBody.error) {
-            sessionStorage.setItem(
-              `dream-image-error:${dream.id}`,
-              errBody.error,
-            );
+          const errBody = (await imageRes.json()) as {
+            error?: string;
+            diagnostics?: Record<string, unknown>;
+          };
+          const bits = [errBody.error, errBody.diagnostics && JSON.stringify(errBody.diagnostics)]
+            .filter(Boolean)
+            .join(" ");
+          if (bits) {
+            sessionStorage.setItem(`dream-image-error:${dream.id}`, bits);
           }
         } catch {
           // ignore parse errors

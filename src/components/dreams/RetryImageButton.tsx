@@ -25,8 +25,13 @@ export function RetryImageButton({ dreamId }: { dreamId: string }) {
             if (!res.ok) {
               const body = (await res.json().catch(() => ({}))) as {
                 error?: string;
+                diagnostics?: Record<string, unknown>;
               };
-              setError(body.error || "Retry failed.");
+              const bits = [body.error || "Retry failed."];
+              if (body.diagnostics) {
+                bits.push(JSON.stringify(body.diagnostics));
+              }
+              setError(bits.join(" "));
               return;
             }
             router.replace(`/dream/${dreamId}`);

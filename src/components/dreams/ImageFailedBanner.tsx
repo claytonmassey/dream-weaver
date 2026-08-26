@@ -22,7 +22,9 @@ export function ImageFailedBanner({ dreamId }: { dreamId: string }) {
           Your dream was saved, but the image couldn&apos;t be created.
         </p>
         {detail ? (
-          <p className="text-xs text-[var(--danger)]">{detail}</p>
+          <p className="whitespace-pre-wrap text-xs text-[var(--danger)]">
+            {detail}
+          </p>
         ) : null}
       </div>
       <RetryImageButton dreamId={dreamId} />

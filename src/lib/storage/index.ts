@@ -97,9 +97,12 @@ export function blobToken(): string | undefined {
 }
 
 export function useVercelBlob(): boolean {
+  // On Vercel, always use Blob when a token exists — ignore local USE_VERCEL_BLOB=false.
+  if (process.env.VERCEL === "1") {
+    return Boolean(blobToken());
+  }
   if (process.env.USE_VERCEL_BLOB === "false") return false;
   if (process.env.USE_VERCEL_BLOB === "true") return true;
-  // Auto-enable when a blob token is present
   return Boolean(blobToken());
 }
 
