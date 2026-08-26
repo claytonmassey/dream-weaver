@@ -1,37 +1,42 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { useState } from "react";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 
-function LoginForm() {
-  const searchParams = useSearchParams();
-  const configError = searchParams.get("error") === "config";
-  const resetOk = searchParams.get("reset") === "1";
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+type Mode = "signup" | "signin";
+
+export function SaveAccountGate({
+  open,
+  onClose,
+  onAuthenticated,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onAuthenticated: () => void;
+}) {
+  const [mode, setMode] = useState<Mode>("signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(
-    configError
-      ? "Server storage isn’t configured. Set DATABASE_URL and AUTH_SECRET in Vercel."
-      : null,
-  );
-  const [info, setInfo] = useState<string | null>(
-    resetOk ? "Password updated. Sign in with your new password." : null,
-  );
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!open) return null;
+
+  async function claimGuest() {
+    try {
+      await fetch("/api/auth/claim-guest", { method: "POST" });
+    } catch {
+      // Non-fatal — dream save will still use the new account.
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setInfo(null);
-
     const normalizedEmail = email.toLowerCase().trim();
 
     try {
@@ -53,43 +58,23 @@ function LoginForm() {
         if (!res.ok) {
           throw new Error(data.error || "Couldn't create account.");
         }
-
-        // Create the session immediately after signup.
-        const result = await signIn("credentials", {
-          email: normalizedEmail,
-          password,
-          redirect: false,
-          callbackUrl: "/",
-        });
-        if (result?.error || !result?.ok) {
-          throw new Error(
-            "Account created, but sign-in failed. Try signing in.",
-          );
-        }
-        try {
-          await fetch("/api/auth/claim-guest", { method: "POST" });
-        } catch {
-          // ignore
-        }
-        window.location.assign(result.url ?? "/");
-        return;
       }
 
       const result = await signIn("credentials", {
         email: normalizedEmail,
         password,
         redirect: false,
-        callbackUrl: "/",
       });
       if (result?.error || !result?.ok) {
-        throw new Error("Invalid email or password.");
+        throw new Error(
+          mode === "signup"
+            ? "Account created, but sign-in failed. Try signing in."
+            : "Invalid email or password.",
+        );
       }
-      try {
-        await fetch("/api/auth/claim-guest", { method: "POST" });
-      } catch {
-        // ignore
-      }
-      window.location.assign(result.url ?? "/");
+
+      await claimGuest();
+      onAuthenticated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setLoading(false);
@@ -97,17 +82,19 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-5 py-10">
-      <div className="glass w-full max-w-sm space-y-6 rounded-3xl border border-white/10 p-6 sm:p-8">
-        <div className="space-y-3 text-center">
-          <div className="flex justify-center">
-            <BrandLogo linked={false} height={72} className="mx-auto" />
-          </div>
-        <p className="text-sm text-[var(--text-muted)]">
-          {mode === "signin"
-            ? "Sign in to keep your dreams private to you"
-            : "Create an account when you’re ready to save"}
-        </p>
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/55 px-4 pb-8 pt-16 sm:items-center sm:pb-4">
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default"
+        aria-label="Close"
+        onClick={onClose}
+      />
+      <div className="glass relative z-10 w-full max-w-sm space-y-5 rounded-3xl border border-white/10 p-6 shadow-2xl">
+        <div className="space-y-2 text-center">
+          <h2 className="font-display text-2xl">Save your dream</h2>
+          <p className="text-sm text-[var(--text-muted)]">
+            Create a free account to keep this dream private to you.
+          </p>
         </div>
 
         <form onSubmit={(e) => void onSubmit(e)} className="space-y-3">
@@ -126,8 +113,8 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="w-full rounded-xl border border-white/10 bg-black/25 px-4 py-3 outline-none placeholder:text-[var(--text-muted)]"
             required
+            className="w-full rounded-xl border border-white/10 bg-black/25 px-4 py-3 outline-none placeholder:text-[var(--text-muted)]"
             autoComplete="email"
           />
           <PasswordInput
@@ -136,9 +123,7 @@ function LoginForm() {
             placeholder="Password"
             required
             minLength={6}
-            autoComplete={
-              mode === "signup" ? "new-password" : "current-password"
-            }
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
           />
           {mode === "signup" && (
             <PasswordInput
@@ -150,17 +135,6 @@ function LoginForm() {
               autoComplete="new-password"
             />
           )}
-          {mode === "signin" && (
-            <div className="flex justify-end">
-              <Link
-                href="/forgot-password"
-                className="text-sm text-[var(--accent)]"
-              >
-                Forgot password?
-              </Link>
-            </div>
-          )}
-          {info && <p className="text-sm text-[var(--success)]">{info}</p>}
           {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
           <button
             type="submit"
@@ -172,8 +146,8 @@ function LoginForm() {
                 ? "Creating…"
                 : "Signing in…"
               : mode === "signup"
-                ? "Create account"
-                : "Sign in"}
+                ? "Create account & save"
+                : "Sign in & save"}
           </button>
         </form>
 
@@ -181,25 +155,24 @@ function LoginForm() {
           type="button"
           onClick={() => {
             setError(null);
-            setInfo(null);
             setConfirmPassword("");
-            setMode((m) => (m === "signin" ? "signup" : "signin"));
+            setMode((m) => (m === "signup" ? "signin" : "signup"));
           }}
-          className="w-full py-2 text-sm text-[var(--text-muted)]"
+          className="w-full text-sm text-[var(--text-muted)]"
         >
-          {mode === "signin"
-            ? "Need an account? Create one"
-            : "Already have an account? Sign in"}
+          {mode === "signup"
+            ? "Already have an account? Sign in"
+            : "Need an account? Create one"}
+        </button>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full text-sm text-[var(--text-muted)]"
+        >
+          Not now
         </button>
       </div>
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div className="min-h-dvh" />}>
-      <LoginForm />
-    </Suspense>
   );
 }

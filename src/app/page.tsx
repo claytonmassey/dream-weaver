@@ -9,11 +9,24 @@ export default async function HomePage() {
   const user = await requirePageUser();
   try {
     await ensureSeeded(user.id);
-    const dreams = await dreamRepository.list(user.id);
-    return <HomeDashboard userName={user.name} dreams={dreams} />;
+    const dreams = user.isGuest
+      ? []
+      : await dreamRepository.list(user.id);
+    return (
+      <HomeDashboard
+        userName={user.name}
+        dreams={dreams}
+        isGuest={user.isGuest}
+      />
+    );
   } catch (error) {
     console.error("[home] failed to load dreams", error);
-    // Render an empty dashboard rather than a hard 500 when the DB is misconfigured.
-    return <HomeDashboard userName={user.name} dreams={[]} />;
+    return (
+      <HomeDashboard
+        userName={user.name}
+        dreams={[]}
+        isGuest={user.isGuest}
+      />
+    );
   }
 }

@@ -34,14 +34,18 @@ export async function POST(request: Request) {
 
     const passwordHash = await bcrypt.hash(parsed.password, 10);
 
-    if (existing && usePrisma()) {
-      await prisma.user.update({
-        where: { email },
-        data: {
-          passwordHash,
-          name: parsed.name ?? existing.name,
-        },
-      });
+    if (existing) {
+      if (usePrisma()) {
+        await prisma.user.update({
+          where: { email },
+          data: {
+            passwordHash,
+            name: parsed.name ?? existing.name,
+          },
+        });
+      } else {
+        await userStore.updatePassword(email, passwordHash);
+      }
     } else {
       await userStore.create({
         email,
@@ -50,7 +54,7 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, email });
   } catch (error) {
     if (error instanceof z.ZodError) {
       const mismatch = error.issues.some((i) =>

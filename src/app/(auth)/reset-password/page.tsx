@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -56,23 +57,19 @@ function ResetPasswordForm() {
         </div>
 
         <form onSubmit={(e) => void onSubmit(e)} className="space-y-3">
-          <input
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="New password"
-            className="w-full rounded-xl border border-white/10 bg-black/25 px-4 py-3 outline-none placeholder:text-[var(--text-muted)]"
             required
             minLength={6}
             autoComplete="new-password"
             disabled={!token}
           />
-          <input
-            type="password"
+          <PasswordInput
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Confirm new password"
-            className="w-full rounded-xl border border-white/10 bg-black/25 px-4 py-3 outline-none placeholder:text-[var(--text-muted)]"
             required
             minLength={6}
             autoComplete="new-password"

@@ -1,6 +1,6 @@
+import { isDemoMode } from "@/lib/auth/demo";
 import { dreamRepository } from "@/lib/db/dream-repository";
 import { buildSeedDreams } from "@/lib/db/seed-data";
-import { isDemoMode } from "@/lib/auth/session";
 
 /**
  * Optionally seeds sample dreams for empty demo accounts.

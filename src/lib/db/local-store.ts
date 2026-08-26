@@ -125,11 +125,20 @@ export const localDb = {
     image?: string;
   }): Promise<UserAccount> {
     const store = await ensureStore();
-    const existing = store.users.find((u) => u.email === input.email);
-    if (existing) return existing;
+    const email = input.email.toLowerCase().trim();
+    const existing = store.users.find((u) => u.email === email);
+    if (existing) {
+      if (input.passwordHash && !existing.passwordHash) {
+        existing.passwordHash = input.passwordHash;
+        if (input.name) existing.name = input.name;
+        if (input.image) existing.image = input.image;
+        await writeStore(store);
+      }
+      return existing;
+    }
     const user: UserAccount = {
       id: createId("user"),
-      email: input.email,
+      email,
       name: input.name ?? null,
       passwordHash: input.passwordHash ?? null,
       image: input.image ?? null,
@@ -396,6 +405,24 @@ export const localDb = {
     store.users = store.users.filter((u) => u.id !== userId);
     await writeStore(store);
     return true;
+  },
+
+  async reassignDreams(fromUserId: string, toUserId: string): Promise<number> {
+    const store = await ensureStore();
+    let moved = 0;
+    for (const dream of store.dreams) {
+      if (dream.userId === fromUserId) {
+        dream.userId = toUserId;
+        moved += 1;
+      }
+    }
+    for (const ref of store.personReferences) {
+      if (ref.userId === fromUserId) {
+        ref.userId = toUserId;
+      }
+    }
+    await writeStore(store);
+    return moved;
   },
 
   async replaceAllDreams(userId: string, dreams: Dream[]): Promise<void> {

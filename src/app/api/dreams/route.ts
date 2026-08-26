@@ -1,4 +1,4 @@
-import { requireUserId } from "@/lib/auth/session";
+import { requireRegisteredUserId, requireUserId } from "@/lib/auth/session";
 import {
   serviceCreateDream,
   serviceListDreams,
@@ -15,7 +15,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const authResult = await requireUserId();
+  // Saving permanently requires a real account — guests are prompted to sign up.
+  const authResult = await requireRegisteredUserId();
   if ("error" in authResult) return authResult.error;
 
   try {

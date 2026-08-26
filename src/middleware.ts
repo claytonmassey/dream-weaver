@@ -1,41 +1,29 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { GUEST_COOKIE, newGuestId } from "@/lib/auth/guest";
 
-const publicPaths = [
-  "/login",
-  "/forgot-password",
-  "/reset-password",
-  "/api/auth",
-];
+const authPages = ["/login", "/forgot-password", "/reset-password"];
 
 export async function middleware(req: NextRequest) {
-  // Opt-in demo mode skips forced login for local prototyping only.
-  if (process.env.DEMO_MODE === "true") {
-    return NextResponse.next();
-  }
-
   const { pathname } = req.nextUrl;
-  const isPublic = publicPaths.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`),
-  );
+  const res = NextResponse.next();
 
-  if (isPublic) {
-    return NextResponse.next();
+  // Ensure every visitor has a stable guest id for anonymous capture.
+  if (!req.cookies.get(GUEST_COOKIE)?.value) {
+    res.cookies.set(GUEST_COOKIE, newGuestId(), {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 400,
+    });
   }
 
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET ?? "dreamline-dev-secret-change-me",
-  });
+  // Auth pages stay reachable; nothing else requires login anymore.
+  void authPages;
+  void pathname;
 
-  if (!token) {
-    const login = new URL("/login", req.nextUrl.origin);
-    login.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(login);
-  }
-
-  return NextResponse.next();
+  return res;
 }
 
 export const config = {
