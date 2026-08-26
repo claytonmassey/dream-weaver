@@ -11,16 +11,13 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-10">
-      <div className="space-y-2">
-        <h1 className="font-display text-4xl">Settings</h1>
-        <p className="text-sm text-[var(--text-muted)]">
-          Privacy controls for a journal that may hold intimate memories.
-        </p>
+    <div className="mx-auto max-w-lg space-y-8 sm:max-w-2xl">
+      <div>
+        <h1 className="font-display text-3xl">Settings</h1>
       </div>
 
-      <section className="space-y-4 rounded-[2rem] border border-white/5 bg-[var(--bg-elevated)] p-6">
-        <h2 className="font-display text-xl">Account</h2>
+      <section className="space-y-3 rounded-xl bg-[var(--bg-elevated)] p-5">
+        <h2 className="text-sm text-[var(--text-muted)]">Account</h2>
         <p className="text-sm text-[var(--text-muted)]">
           {session?.user?.email
             ? `Signed in as ${session.user.email}`
@@ -48,10 +45,10 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <section className="space-y-4 rounded-[2rem] border border-white/5 bg-[var(--bg-elevated)] p-6">
-        <h2 className="font-display text-xl">Demo data</h2>
+      <section className="space-y-3 rounded-xl bg-[var(--bg-elevated)] p-5">
+        <h2 className="text-sm text-[var(--text-muted)]">Demo data</h2>
         <p className="text-sm text-[var(--text-muted)]">
-          Reset the local demo store with five sample dreams.
+          Reset the local store with sample dreams.
         </p>
         <button
           type="button"
@@ -63,19 +60,16 @@ export default function SettingsPage() {
             setLoading(false);
             router.refresh();
           }}
-          className="rounded-full border border-white/10 px-5 py-2.5 text-sm"
+          className="rounded-full bg-white/5 px-5 py-2.5 text-sm"
         >
           {loading ? "Seeding…" : "Reseed demo dreams"}
         </button>
       </section>
 
-      <section className="space-y-4 rounded-[2rem] border border-[var(--danger)]/20 bg-[var(--bg-elevated)] p-6">
-        <h2 className="font-display text-xl text-[var(--danger)]">
-          Danger zone
-        </h2>
+      <section className="space-y-3 rounded-xl bg-[var(--bg-elevated)] p-5">
+        <h2 className="text-sm text-[var(--danger)]">Danger zone</h2>
         <p className="text-sm text-[var(--text-muted)]">
-          Delete your account and all associated dreams, audio, images, and
-          reference photos from this environment.
+          Delete your account and all dream data.
         </p>
         <button
           type="button"
@@ -90,7 +84,7 @@ export default function SettingsPage() {
             await fetch("/api/account", { method: "DELETE" });
             await signOut({ callbackUrl: "/login" });
           }}
-          className="rounded-full border border-[var(--danger)]/40 px-5 py-2.5 text-sm text-[var(--danger)]"
+          className="text-sm text-[var(--danger)]"
         >
           Delete account
         </button>

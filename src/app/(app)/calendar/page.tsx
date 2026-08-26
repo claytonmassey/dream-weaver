@@ -11,12 +11,9 @@ export default async function CalendarPage() {
   const dreams = await dreamRepository.list(user.id);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10">
-      <div className="space-y-2">
-        <h1 className="font-display text-4xl">Calendar</h1>
-        <p className="text-sm text-[var(--text-muted)]">
-          Days with dreams glow with a thumbnail. Tap a date to revisit them.
-        </p>
+    <div className="space-y-6 sm:space-y-8">
+      <div>
+        <h1 className="font-display text-3xl">Calendar</h1>
       </div>
       <DreamCalendar dreams={dreams} />
     </div>

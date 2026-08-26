@@ -2,46 +2,51 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Mic, Upload } from "lucide-react";
+import { Keyboard, Mic } from "lucide-react";
+import { DreamConversation } from "@/components/dreams/DreamConversation";
 import { DreamProcessing } from "@/components/dreams/DreamProcessing";
 import { DreamRecorder } from "@/components/dreams/DreamRecorder";
 import { PersonReferencePrompt } from "@/components/dreams/PersonReferencePrompt";
+import { StylePicker } from "@/components/dreams/StylePicker";
 import { TranscriptEditor } from "@/components/dreams/TranscriptEditor";
+import { TranscriptReadBack } from "@/components/dreams/TranscriptReadBack";
 import { toDateInputValue } from "@/lib/utils/cn";
-import type { Dream, DreamAnalysis, DreamPerson } from "@/types/dream";
+import type { Dream, DreamAnalysis, DreamPerson, DreamVisualStyle } from "@/types/dream";
 
 type Step =
-  | "compose"
+  | "choose"
+  | "listen"
+  | "type"
   | "transcribing"
-  | "edit-transcript"
+  | "review"
+  | "converse"
+  | "design"
   | "analyzing"
   | "person-reference"
   | "saving"
   | "generating"
   | "error";
 
-export function DreamComposer({
-  compact = false,
-}: {
-  compact?: boolean;
-}) {
+export function DreamComposer() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("compose");
-  const [text, setText] = useState("");
-  const [dreamDate, setDreamDate] = useState(toDateInputValue());
-  const [retainAudio, setRetainAudio] = useState(false);
-  const [showRecorder, setShowRecorder] = useState(false);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [step, setStep] = useState<Step>("choose");
+  const [dreamDate] = useState(toDateInputValue());
   const [transcript, setTranscript] = useState("");
   const [rawTranscript, setRawTranscript] = useState("");
+  const [fromVoice, setFromVoice] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState<DreamVisualStyle | null>(
+    null,
+  );
+  const [pendingPhotos, setPendingPhotos] = useState<Record<string, File>>({});
   const [analysis, setAnalysis] = useState<DreamAnalysis | null>(null);
   const [pendingPeople, setPendingPeople] = useState<DreamPerson[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [savedDreamId, setSavedDreamId] = useState<string | null>(null);
 
-  async function handleTranscribe(blob: Blob) {
+  async function handleRecordingReady(blob: Blob) {
     setStep("transcribing");
     setError(null);
+    setFromVoice(true);
     try {
       const form = new FormData();
       form.append("audio", blob, "dream.webm");
@@ -49,40 +54,51 @@ export function DreamComposer({
         method: "POST",
         body: form,
       });
-      if (!res.ok) throw new Error("Transcription failed");
       const data = (await res.json()) as {
-        transcript: string;
-        cleanedTranscript: string;
+        transcript?: string;
+        cleanedTranscript?: string;
+        error?: string;
       };
-      setRawTranscript(data.transcript);
+      if (!res.ok || !data.cleanedTranscript) {
+        throw new Error(data.error || "Transcription failed");
+      }
+      setRawTranscript(data.transcript || data.cleanedTranscript);
       setTranscript(data.cleanedTranscript);
-      setStep("edit-transcript");
-    } catch {
-      setError("We couldn't transcribe that recording. Please try again.");
-      setStep("compose");
+      setStep("review");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Couldn't hear that clearly.";
+      setError(message);
+      setStep("listen");
     }
   }
 
-  async function submitTextOrContinue() {
+  function submitTypedDream() {
+    const value = transcript.trim();
+    if (!value) {
+      setError("Write a little about your dream first.");
+      return;
+    }
     setError(null);
-    if (audioBlob && !transcript) {
-      await handleTranscribe(audioBlob);
-      return;
-    }
-    if (!text.trim() && !transcript.trim()) {
-      setError("Write or record your dream first.");
-      return;
-    }
-    if (text.trim() && !transcript) {
-      setRawTranscript(text.trim());
-      setTranscript(text.trim());
-      setStep("edit-transcript");
-      return;
-    }
-    setStep("edit-transcript");
+    setFromVoice(false);
+    setRawTranscript(value);
+    setTranscript(value);
+    setStep("converse");
   }
 
-  async function confirmTranscript() {
+  function confirmReview() {
+    const value = transcript.trim();
+    if (!value) {
+      setError("Add a bit more before continuing.");
+      return;
+    }
+    setError(null);
+    setTranscript(value);
+    setStep("converse");
+  }
+
+  async function beginPainting() {
+    if (!selectedStyle) return;
     setStep("analyzing");
     setError(null);
     try {
@@ -93,10 +109,8 @@ export function DreamComposer({
       });
       if (!res.ok) throw new Error("Analysis failed");
       const data = (await res.json()) as {
-        cleanedTranscript: string;
         analysis: DreamAnalysis;
       };
-      setTranscript(data.cleanedTranscript);
       setAnalysis(data.analysis);
 
       const realPeople = data.analysis.people.filter((p) => p.isRealPerson);
@@ -117,8 +131,8 @@ export function DreamComposer({
         await saveAndGenerate(data.analysis, {});
       }
     } catch {
-      setError("Analysis failed. Please try again.");
-      setStep("edit-transcript");
+      setError("Something went wrong. Try again.");
+      setStep("design");
     }
   }
 
@@ -126,13 +140,11 @@ export function DreamComposer({
     dreamAnalysis: DreamAnalysis,
     photos: Record<string, File>,
   ) {
+    const style = selectedStyle ?? "cinematic";
+    setPendingPhotos(photos);
     setStep("saving");
     setError(null);
     try {
-      const referencePhotos: Array<{ personName: string; imageUrl: string }> =
-        [];
-
-      // Create dream first (without waiting on image)
       const createRes = await fetch("/api/dreams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -141,16 +153,15 @@ export function DreamComposer({
           rawTranscript: rawTranscript || transcript,
           cleanedTranscript: transcript,
           analysis: dreamAnalysis,
-          retainAudio,
-          visualStyle: "cinematic",
-          referencePhotos,
+          retainAudio: false,
+          visualStyle: style,
+          referencePhotos: [],
         }),
       });
       if (!createRes.ok) throw new Error("Save failed");
       const { dream } = (await createRes.json()) as { dream: Dream };
       setSavedDreamId(dream.id);
 
-      // Upload reference photos against saved person IDs
       for (const [tempId, file] of Object.entries(photos)) {
         const tempPerson = pendingPeople.find((p) => p.id === tempId);
         if (!tempPerson) continue;
@@ -171,10 +182,9 @@ export function DreamComposer({
       const imageRes = await fetch("/api/dreams/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dreamId: dream.id, style: "cinematic" }),
+        body: JSON.stringify({ dreamId: dream.id, style }),
       });
 
-      // Even if image fails, dream is saved
       if (!imageRes.ok) {
         router.push(`/dream/${dream.id}?imageFailed=1`);
         return;
@@ -184,8 +194,8 @@ export function DreamComposer({
     } catch {
       setError(
         savedDreamId
-          ? "Image generation failed, but your dream was saved."
-          : "Something went wrong while saving your dream.",
+          ? "Painting failed, but your dream was saved."
+          : "Couldn't save your dream.",
       );
       setStep("error");
     }
@@ -198,10 +208,10 @@ export function DreamComposer({
     step === "generating"
   ) {
     const labels: Partial<Record<Step, string>> = {
-      transcribing: "Listening carefully...",
-      analyzing: "Finding the moments that mattered...",
-      saving: "Remembering your dream...",
-      generating: "Creating your dream...",
+      transcribing: "Writing it down...",
+      analyzing: "Gathering the details...",
+      saving: "Preparing the canvas...",
+      generating: "Painting your dream...",
     };
     return <DreamProcessing label={labels[step]} />;
   }
@@ -211,28 +221,57 @@ export function DreamComposer({
       <PersonReferencePrompt
         people={pendingPeople}
         onContinue={(photos) => void saveAndGenerate(analysis, photos)}
-        onSkip={() => void saveAndGenerate(analysis, {})}
+        onSkip={() => void saveAndGenerate(analysis, pendingPhotos)}
       />
     );
   }
 
-  if (step === "edit-transcript") {
+  if (step === "design") {
     return (
-      <div className="animate-fade-up space-y-6">
+      <StylePicker
+        selected={selectedStyle}
+        onSelect={setSelectedStyle}
+        onContinue={() => void beginPainting()}
+        onBack={() => setStep("converse")}
+      />
+    );
+  }
+
+  if (step === "converse") {
+    return (
+      <DreamConversation
+        transcript={transcript}
+        onReady={(enriched) => {
+          setTranscript(enriched);
+          setStep("design");
+        }}
+        onBack={() => setStep(fromVoice ? "review" : "type")}
+      />
+    );
+  }
+
+  if (step === "review") {
+    return (
+      <div className="flex flex-col gap-5">
         <TranscriptEditor value={transcript} onChange={setTranscript} />
+        {fromVoice && <TranscriptReadBack text={transcript} autoPlay />}
         {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
-        <div className="flex flex-wrap gap-3">
+        <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={() => void confirmTranscript()}
-            className="rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-medium text-[#1a1612]"
+            onClick={confirmReview}
+            className="min-h-11 flex-1 rounded-full bg-[var(--accent)] text-sm font-medium text-[#1a1612]"
           >
             Continue
           </button>
           <button
             type="button"
-            onClick={() => setStep("compose")}
-            className="rounded-full border border-white/10 px-6 py-3 text-sm text-[var(--text-muted)]"
+            onClick={() => {
+              setError(null);
+              setFromVoice(false);
+              setStep("choose");
+            }}
+            className="text-sm text-[var(--text-muted)]"
           >
             Back
           </button>
@@ -243,8 +282,7 @@ export function DreamComposer({
 
   if (step === "error") {
     return (
-      <div className="space-y-4 rounded-3xl border border-[var(--danger)]/30 bg-[var(--bg-elevated)] p-8">
-        <h2 className="font-display text-2xl">Something went wrong</h2>
+      <div className="space-y-4">
         <p className="text-sm text-[var(--text-muted)]">{error}</p>
         <div className="flex gap-3">
           {savedDreamId && (
@@ -253,15 +291,77 @@ export function DreamComposer({
               onClick={() => router.push(`/dream/${savedDreamId}`)}
               className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-[#1a1612]"
             >
-              View saved dream
+              View dream
             </button>
           )}
           <button
             type="button"
-            onClick={() => setStep("compose")}
-            className="rounded-full border border-white/10 px-5 py-2.5 text-sm"
+            onClick={() => setStep("choose")}
+            className="px-3 py-2.5 text-sm text-[var(--text-muted)]"
           >
-            Try again
+            Start over
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "listen") {
+    return (
+      <div className="flex flex-col items-center gap-8 pt-8">
+        <DreamRecorder
+          onRecordingReady={(blob) => void handleRecordingReady(blob)}
+          onClear={() => setError(null)}
+          autoStart
+        />
+        {error && (
+          <p className="text-center text-sm text-[var(--danger)]">{error}</p>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            setError(null);
+            setStep("choose");
+          }}
+          className="text-sm text-[var(--text-muted)]"
+        >
+          Back
+        </button>
+      </div>
+    );
+  }
+
+  if (step === "type") {
+    return (
+      <div className="flex flex-col gap-4">
+        <textarea
+          value={transcript}
+          onChange={(e) => setTranscript(e.target.value)}
+          rows={10}
+          autoFocus
+          placeholder="What did you dream about?"
+          className="w-full flex-1 resize-none bg-transparent text-lg leading-relaxed outline-none placeholder:text-[var(--text-muted)]"
+          aria-label="Type your dream"
+        />
+        {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
+        <div className="flex items-center gap-4 pt-2">
+          <button
+            type="button"
+            onClick={submitTypedDream}
+            className="min-h-11 flex-1 rounded-full bg-[var(--accent)] text-sm font-medium text-[#1a1612]"
+          >
+            Continue
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTranscript("");
+              setError(null);
+              setStep("choose");
+            }}
+            className="text-sm text-[var(--text-muted)]"
+          >
+            Back
           </button>
         </div>
       </div>
@@ -269,100 +369,40 @@ export function DreamComposer({
   }
 
   return (
-    <div className="animate-fade-up space-y-6">
-      {!compact && (
-        <div className="space-y-2">
-          <p className="text-sm uppercase tracking-[0.2em] text-[var(--text-muted)]">
-            Dreamline
-          </p>
-          <h1 className="font-display text-4xl md:text-5xl">
-            What did you dream about?
-          </h1>
-          <p className="max-w-xl text-sm text-[var(--text-muted)] md:text-base">
-            Type it, speak it, or upload a recording. We&apos;ll help you hold
-            onto the moments that mattered.
-          </p>
-        </div>
-      )}
+    <div className="flex flex-col gap-2 pt-2">
+      <button
+        type="button"
+        onClick={() => {
+          setError(null);
+          setTranscript("");
+          setFromVoice(false);
+          setSelectedStyle(null);
+          setStep("listen");
+        }}
+        className="flex min-h-16 items-center gap-4 rounded-2xl bg-[var(--bg-elevated)] px-5 py-4 text-left active:bg-[var(--bg-soft)]"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[#1a1612]">
+          <Mic className="h-5 w-5" />
+        </span>
+        <span className="font-display text-xl">Speak</span>
+      </button>
 
-      <div className="space-y-4 rounded-[2rem] border border-white/5 bg-[var(--bg-elevated)] p-5 md:p-7">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={compact ? 5 : 7}
-          placeholder="I was walking through my childhood neighborhood late at night…"
-          className="w-full resize-y bg-transparent text-base leading-relaxed outline-none placeholder:text-[var(--text-muted)]/70 md:text-lg"
-        />
-
-        <div className="flex flex-wrap items-center gap-3 border-t border-white/5 pt-4">
-          <button
-            type="button"
-            onClick={() => setShowRecorder((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text)]"
-          >
-            <Mic className="h-4 w-4" />
-            Record
-          </button>
-
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text)]">
-            <Upload className="h-4 w-4" />
-            Upload audio
-            <input
-              type="file"
-              accept="audio/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setAudioBlob(file);
-                  setShowRecorder(true);
-                }
-              }}
-            />
-          </label>
-
-          <label className="ml-auto flex items-center gap-2 text-xs text-[var(--text-muted)]">
-            Dream date
-            <input
-              type="date"
-              value={dreamDate}
-              onChange={(e) => setDreamDate(e.target.value)}
-              className="rounded-lg border border-white/10 bg-transparent px-2 py-1 text-[var(--text)]"
-            />
-          </label>
-        </div>
-
-        {showRecorder && (
-          <DreamRecorder
-            onRecordingReady={(blob) => setAudioBlob(blob)}
-            onClear={() => setAudioBlob(null)}
-          />
-        )}
-
-        {audioBlob && !showRecorder && (
-          <p className="text-xs text-[var(--accent)]">Audio ready to submit</p>
-        )}
-
-        <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-          <input
-            type="checkbox"
-            checked={retainAudio}
-            onChange={(e) => setRetainAudio(e.target.checked)}
-            className="rounded"
-          />
-          Keep original audio after transcription
-        </label>
-
-        {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
-
-        <button
-          type="button"
-          onClick={() => void submitTextOrContinue()}
-          className="w-full rounded-full bg-[var(--accent)] py-3.5 text-sm font-medium text-[#1a1612] transition hover:brightness-110 md:w-auto md:px-8"
-        >
-          Remember My Dream
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setError(null);
+          setTranscript("");
+          setFromVoice(false);
+          setSelectedStyle(null);
+          setStep("type");
+        }}
+        className="flex min-h-16 items-center gap-4 rounded-2xl bg-[var(--bg-elevated)] px-5 py-4 text-left active:bg-[var(--bg-soft)]"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-[var(--text)]">
+          <Keyboard className="h-5 w-5" />
+        </span>
+        <span className="font-display text-xl">Type</span>
+      </button>
     </div>
   );
 }

@@ -1,12 +1,11 @@
 import Image from "next/image";
-import { MoodBadge } from "@/components/dreams/MoodBadge";
 import { formatDreamDate } from "@/lib/utils/cn";
 import type { Dream } from "@/types/dream";
 
 export function DreamHero({ dream }: { dream: Dream }) {
   return (
-    <section className="animate-fade-up overflow-hidden rounded-[2rem] bg-[var(--bg-elevated)]">
-      <div className="relative aspect-[16/9] w-full bg-[#151820] md:aspect-[21/9]">
+    <section className="space-y-4">
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-[var(--bg-elevated)] sm:aspect-[16/10]">
         {dream.imageUrl ? (
           <Image
             src={dream.imageUrl}
@@ -18,27 +17,24 @@ export function DreamHero({ dream }: { dream: Dream }) {
             unoptimized
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-[var(--text-muted)]">
+          <div className="flex h-full items-center justify-center text-sm text-[var(--text-muted)]">
             {dream.imageStatus === "failed"
               ? "Image could not be generated"
               : "Image pending"}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0d10] via-[#0c0d10]/40 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 space-y-3 p-6 md:p-10">
-          <div className="flex flex-wrap items-center gap-3">
-            <time className="text-sm text-white/70">
-              {formatDreamDate(dream.dreamDate)}
-            </time>
-            <MoodBadge mood={dream.mood} />
-          </div>
-          <h1 className="max-w-3xl font-display text-3xl leading-tight md:text-5xl">
-            {dream.title}
-          </h1>
-          <p className="max-w-2xl text-sm leading-relaxed text-white/75 md:text-base">
-            {dream.summary}
-          </p>
+      </div>
+      <div className="space-y-2 px-0.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--text-muted)]">
+          <time>{formatDreamDate(dream.dreamDate)}</time>
+          <span>{dream.mood}</span>
         </div>
+        <h1 className="font-display text-2xl leading-tight sm:text-3xl">
+          {dream.title}
+        </h1>
+        <p className="text-sm leading-relaxed text-[var(--text-muted)] sm:text-base">
+          {dream.summary}
+        </p>
       </div>
     </section>
   );

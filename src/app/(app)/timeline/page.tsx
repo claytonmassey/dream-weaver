@@ -12,12 +12,9 @@ export default async function TimelinePage() {
   const dreams = await dreamRepository.list(user.id);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10">
-      <div className="space-y-2">
-        <h1 className="font-display text-4xl">Timeline</h1>
-        <p className="text-sm text-[var(--text-muted)]">
-          A visual history of the dreams you&apos;ve remembered
-        </p>
+    <div className="space-y-6 sm:space-y-8">
+      <div>
+        <h1 className="font-display text-3xl">Timeline</h1>
       </div>
       {dreams.length === 0 ? (
         <EmptyDreamState />

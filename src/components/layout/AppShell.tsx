@@ -38,18 +38,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-7xl">
-      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-white/5 px-4 py-8 md:flex">
-        <Link href="/" className="mb-10 px-3">
-          <span className="font-display text-2xl tracking-tight text-[var(--text)]">
-            Dreamline
-          </span>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">
-            Your dream journal
-          </p>
+    <div className="mx-auto flex min-h-dvh w-full max-w-6xl">
+      <aside className="sticky top-0 hidden h-dvh w-48 shrink-0 flex-col border-r border-white/[0.06] px-3 py-8 lg:flex">
+        <Link href="/" className="mb-8 px-2 font-display text-xl">
+          Dreamline
         </Link>
-
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav className="flex flex-1 flex-col gap-0.5">
           {desktopNav.map((item) => {
             const active =
               item.href === "/"
@@ -61,10 +55,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition",
+                  "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm",
                   active
-                    ? "bg-white/5 text-[var(--accent)]"
-                    : "text-[var(--text-muted)] hover:bg-white/[0.03] hover:text-[var(--text)]",
+                    ? "text-[var(--text)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--text)]",
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -73,33 +67,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
-
         <Link
           href="/dream/new"
-          className="mt-4 flex items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-4 py-3 text-sm font-medium text-[#1a1612] transition hover:brightness-110"
+          className="mt-4 flex min-h-11 items-center justify-center gap-2 rounded-full bg-[var(--accent)] px-4 text-sm font-medium text-[#1a1612]"
         >
           <Plus className="h-4 w-4" />
           Add Dream
         </Link>
       </aside>
 
-      <div className="flex min-h-screen flex-1 flex-col pb-24 md:pb-0">
-        <header className="flex items-center justify-between px-5 pt-6 md:hidden">
-          <Link href="/" className="font-display text-xl">
+      <div className="flex min-h-dvh flex-1 flex-col pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-0">
+        <header className="sticky top-0 z-30 flex items-center bg-[var(--bg)]/90 px-4 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm lg:hidden">
+          <Link href="/" className="font-display text-lg">
             Dreamline
           </Link>
-          <Link
-            href="/dream/new"
-            className="rounded-full bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-[#1a1612]"
-          >
-            + Add
-          </Link>
         </header>
-        <main className="flex-1 px-5 py-6 md:px-10 md:py-10">{children}</main>
+
+        <main className="mx-auto w-full flex-1 px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
+          {children}
+        </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/5 bg-[#0c0d10]/95 backdrop-blur md:hidden">
-        <ul className="mx-auto flex max-w-lg items-end justify-between px-2 pb-safe pt-2">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.06] bg-[var(--bg)] lg:hidden">
+        <ul className="mx-auto flex max-w-lg items-center justify-between px-2 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-1">
           {mobileNav.map((item) => {
             const active =
               item.href === "/"
@@ -108,13 +98,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             const Icon = item.icon;
             if (item.primary) {
               return (
-                <li key={item.href} className="-mt-5">
+                <li key={item.href} className="flex flex-1 justify-center">
                   <Link
                     href={item.href}
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-[#1a1612] shadow-lg shadow-black/40"
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--accent)] text-[#1a1612]"
                     aria-label="Add Dream"
                   >
-                    <Icon className="h-6 w-6" />
+                    <Icon className="h-5 w-5" />
                   </Link>
                 </li>
               );
@@ -123,13 +113,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <li key={item.href} className="flex-1">
                 <Link
                   href={item.href}
+                  aria-label={item.label}
                   className={cn(
-                    "flex flex-col items-center gap-1 px-2 py-2 text-[10px]",
-                    active ? "text-[var(--accent)]" : "text-[var(--text-muted)]",
+                    "flex min-h-11 items-center justify-center",
+                    active ? "text-[var(--text)]" : "text-[var(--text-muted)]",
                   )}
                 >
                   <Icon className="h-5 w-5" />
-                  {item.label}
                 </Link>
               </li>
             );

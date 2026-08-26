@@ -1,8 +1,8 @@
 /**
  * AI provider factory.
  *
- * Plug in real providers here when you have API keys.
- * See docs/AI_PROVIDERS.md for the exact interfaces and env vars.
+ * Real OpenAI providers are used when API keys are set in env.
+ * See docs/AI_PROVIDERS.md.
  */
 
 import {
@@ -10,33 +10,45 @@ import {
   MockTranscriptionProvider,
 } from "@/lib/ai/providers/mock";
 import { MockDreamImageProvider } from "@/lib/ai/providers/mock-image";
+import { OpenAIAnalysisProvider } from "@/lib/ai/providers/openai-analysis";
+import { OpenAITranscriptionProvider } from "@/lib/ai/providers/openai-transcription";
 import type {
   DreamAnalysisProvider,
   DreamImageProvider,
   TranscriptionProvider,
 } from "@/lib/ai/providers/types";
 
+function transcriptionKey(): string | undefined {
+  return (
+    process.env.AI_TRANSCRIPTION_API_KEY ||
+    process.env.AI_API_KEY ||
+    undefined
+  );
+}
+
+function analysisKey(): string | undefined {
+  return process.env.AI_API_KEY || process.env.AI_TRANSCRIPTION_API_KEY || undefined;
+}
+
 export function getTranscriptionProvider(): TranscriptionProvider {
-  // Example:
-  // if (process.env.AI_TRANSCRIPTION_API_KEY) {
-  //   return new OpenAIWhisperProvider(process.env.AI_TRANSCRIPTION_API_KEY);
-  // }
+  const key = transcriptionKey();
+  if (key) {
+    return new OpenAITranscriptionProvider(key);
+  }
   return new MockTranscriptionProvider();
 }
 
 export function getDreamAnalysisProvider(): DreamAnalysisProvider {
-  // Example:
-  // if (process.env.AI_API_KEY) {
-  //   return new OpenAIAnalysisProvider(process.env.AI_API_KEY);
-  // }
+  const key = analysisKey();
+  if (key) {
+    return new OpenAIAnalysisProvider(key);
+  }
   return new MockDreamAnalysisProvider();
 }
 
 export function getDreamImageProvider(): DreamImageProvider {
-  // Example:
-  // if (process.env.AI_IMAGE_API_KEY) {
-  //   return new FalOrOpenAIImageProvider(process.env.AI_IMAGE_API_KEY);
-  // }
+  // Image generation stays mocked until a dedicated image provider is wired.
+  void process.env.AI_IMAGE_API_KEY;
   return new MockDreamImageProvider();
 }
 

@@ -15,9 +15,10 @@ export async function serviceTranscribe(audio: File | Blob): Promise<{
 }
 
 export async function serviceAnalyze(transcript: string) {
-  const cleanedTranscript = await cleanupDreamTranscript(transcript);
-  const analysis = await analyzeDream(cleanedTranscript);
-  return { cleanedTranscript, analysis };
+  // Transcript is already the user's confirmed text (typed, or voice + grammar cleanup).
+  // Do not rewrite it again here — analysis only.
+  const analysis = await analyzeDream(transcript);
+  return { cleanedTranscript: transcript, analysis };
 }
 
 export async function serviceCreateDream(
@@ -78,9 +79,11 @@ export async function serviceGenerateDreamImage(
           .filter((url): url is string => Boolean(url));
 
   try {
+    const resolvedStyle = style ?? dream.visualStyle;
+    const styledPrompt = `${dream.analysisJson.imagePrompt}. Visual style: ${resolvedStyle}.`;
     const image = await generateDreamImage({
-      prompt: dream.analysisJson.imagePrompt,
-      style: style ?? dream.visualStyle,
+      prompt: styledPrompt,
+      style: resolvedStyle,
       referenceImages: refs,
     });
     const updated = await dreamRepository.updateImage(

@@ -13,21 +13,17 @@ export default async function PeoplePage() {
   const references = await dreamRepository.listPersonReferences(user.id);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-10">
-      <div className="space-y-2">
-        <h1 className="font-display text-4xl">People</h1>
-        <p className="text-sm text-[var(--text-muted)]">
-          Faces and names that return across your dreams. Continuity analytics
-          will grow from this foundation.
-        </p>
+    <div className="mx-auto max-w-lg space-y-6 lg:max-w-2xl">
+      <div>
+        <h1 className="font-display text-3xl">People</h1>
       </div>
 
       {people.length === 0 ? (
         <p className="text-sm text-[var(--text-muted)]">
-          No people detected yet. They&apos;ll appear here as you journal.
+          No people detected yet.
         </p>
       ) : (
-        <ul className="space-y-3">
+        <ul className="divide-y divide-white/[0.06]">
           {people.map((person) => {
             const ref = references.find(
               (r) => r.name.toLowerCase() === person.name.toLowerCase(),
@@ -35,22 +31,21 @@ export default async function PeoplePage() {
             return (
               <li
                 key={person.name}
-                className="flex items-center justify-between gap-4 rounded-3xl border border-white/5 bg-[var(--bg-elevated)] px-5 py-4"
+                className="flex items-center justify-between gap-4 py-4"
               >
                 <div>
-                  <p className="font-medium">{person.name}</p>
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  <p className="text-sm font-medium">{person.name}</p>
+                  <p className="mt-0.5 text-xs text-[var(--text-muted)]">
                     {person.appearances} appearance
                     {person.appearances === 1 ? "" : "s"}
                     {person.relationship ? ` · ${person.relationship}` : ""}
-                    {person.isRealPerson ? " · from your life" : ""}
                   </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {person.dreamIds.slice(0, 3).map((id) => (
+                  <div className="mt-1.5 flex flex-wrap gap-2">
+                    {person.dreamIds.slice(0, 2).map((id) => (
                       <Link
                         key={id}
                         href={`/dream/${id}`}
-                        className="text-xs text-[var(--accent)]"
+                        className="text-xs text-[var(--text-muted)] underline-offset-2 hover:underline"
                       >
                         View dream
                       </Link>

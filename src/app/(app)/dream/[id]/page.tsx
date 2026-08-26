@@ -24,9 +24,9 @@ export default async function DreamDetailPage({ params, searchParams }: Props) {
   if (!dream) notFound();
 
   return (
-    <div className="mx-auto max-w-5xl space-y-12">
+    <div className="mx-auto max-w-lg space-y-8 sm:space-y-10 lg:max-w-5xl lg:space-y-12">
       {(imageFailed || dream.imageStatus === "failed") && (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--danger)]/30 bg-[var(--bg-elevated)] px-5 py-4">
+        <div className="flex flex-col gap-3 rounded-2xl border border-[var(--danger)]/30 bg-[var(--bg-elevated)] px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5">
           <p className="text-sm text-[var(--text-muted)]">
             Your dream was saved, but the image couldn&apos;t be created.
           </p>
@@ -36,22 +36,22 @@ export default async function DreamDetailPage({ params, searchParams }: Props) {
 
       <DreamHero dream={dream} />
 
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl">Your Dream</h2>
-        <p className="max-w-3xl whitespace-pre-wrap text-base leading-relaxed text-[var(--text-muted)]">
+      <section className="space-y-3 sm:space-y-4">
+        <h2 className="font-display text-xl sm:text-2xl">Your Dream</h2>
+        <p className="max-w-3xl whitespace-pre-wrap text-[15px] leading-relaxed text-[var(--text-muted)] sm:text-base">
           {dream.cleanedTranscript}
         </p>
       </section>
 
-      <section className="space-y-6">
-        <h2 className="font-display text-2xl">Key Moments</h2>
+      <section className="space-y-4 sm:space-y-6">
+        <h2 className="font-display text-xl sm:text-2xl">Key Moments</h2>
         <DreamEventList events={dream.events} />
       </section>
 
       {(dream.locations.length > 0 ||
         dream.objects.length > 0 ||
         dream.people.length > 0) && (
-        <section className="grid gap-6 rounded-[2rem] border border-white/5 bg-[var(--bg-elevated)] p-6 md:grid-cols-3">
+        <section className="grid gap-4 rounded-xl bg-[var(--bg-elevated)] p-4 sm:grid-cols-3 sm:p-5">
           <div>
             <h3 className="mb-2 text-xs uppercase tracking-wider text-[var(--text-muted)]">
               Places
@@ -75,10 +75,10 @@ export default async function DreamDetailPage({ params, searchParams }: Props) {
         </section>
       )}
 
-      <div className="flex flex-wrap gap-3 border-t border-white/5 pt-8">
+      <div className="flex flex-col gap-3 border-t border-white/5 pt-6 sm:flex-row sm:flex-wrap sm:pt-8">
         <Link
           href="/timeline"
-          className="rounded-full border border-white/10 px-5 py-2.5 text-sm text-[var(--text-muted)]"
+          className="flex min-h-11 items-center justify-center rounded-full border border-white/10 px-5 py-2.5 text-sm text-[var(--text-muted)]"
         >
           Back to timeline
         </Link>

@@ -29,45 +29,39 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-5">
-      <div className="w-full max-w-md space-y-8 rounded-[2rem] border border-white/5 bg-[var(--bg-elevated)] p-8">
-        <div className="space-y-2 text-center">
-          <Link href="/" className="font-display text-3xl">
+    <div className="flex min-h-dvh items-center justify-center px-5">
+      <div className="w-full max-w-sm space-y-6">
+        <div className="space-y-1 text-center">
+          <Link href="/" className="font-display text-2xl">
             Dreamline
           </Link>
-          <p className="text-sm text-[var(--text-muted)]">
-            A private place for the dreams you want to keep
-          </p>
+          <p className="text-sm text-[var(--text-muted)]">Sign in</p>
         </div>
 
-        <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
-          <label className="block space-y-2 text-sm">
-            <span className="text-[var(--text-muted)]">Email</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--accent)]/40"
-              required
-            />
-          </label>
-          <label className="block space-y-2 text-sm">
-            <span className="text-[var(--text-muted)]">Password</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--accent)]/40"
-              required
-            />
-          </label>
+        <form onSubmit={(e) => void onSubmit(e)} className="space-y-3">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            className="w-full rounded-xl bg-[var(--bg-elevated)] px-4 py-3 outline-none"
+            required
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            className="w-full rounded-xl bg-[var(--bg-elevated)] px-4 py-3 outline-none"
+            required
+          />
           {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
           <button
             type="submit"
             disabled={loading}
             className="w-full rounded-full bg-[var(--accent)] py-3 text-sm font-medium text-[#1a1612]"
           >
-            {loading ? "Signing in…" : "Continue with email"}
+            {loading ? "Signing in…" : "Continue"}
           </button>
         </form>
 
@@ -75,12 +69,10 @@ export default function LoginPage() {
           type="button"
           onClick={() =>
             void signIn("google", { callbackUrl: "/" }).catch(() =>
-              setError(
-                "Google sign-in requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
-              ),
+              setError("Google sign-in is not configured."),
             )
           }
-          className="w-full rounded-full border border-white/10 py-3 text-sm"
+          className="w-full py-2 text-sm text-[var(--text-muted)]"
         >
           Continue with Google
         </button>

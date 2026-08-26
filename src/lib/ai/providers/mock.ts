@@ -1,5 +1,9 @@
 import type { DreamAnalysis } from "@/types/dream";
 import type {
+  ConversationMessage,
+  ConversationTurnResult,
+} from "@/types/conversation";
+import type {
   DreamAnalysisProvider,
   TranscriptionProvider,
 } from "@/lib/ai/providers/types";
@@ -192,17 +196,64 @@ export class MockTranscriptionProvider implements TranscriptionProvider {
 
 export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
   async cleanupTranscript(rawTranscript: string): Promise<string> {
-    await delay(500);
-    return rawTranscript
-      .replace(/\b(um|uh|like|you know)\b[, ]*/gi, "")
+    await delay(400);
+    // Grammar-only mock cleanup: fillers, spacing, capitalize first letter.
+    let text = rawTranscript
+      .replace(/\b(um|uh|erm|like|you know)\b[, ]*/gi, "")
       .replace(/\s+/g, " ")
-      .trim()
-      .replace(/(^[a-z])/, (m) => m.toUpperCase());
+      .replace(/\s+([,.!?])/g, "$1")
+      .trim();
+    if (text.length > 0) {
+      text = text.charAt(0).toUpperCase() + text.slice(1);
+    }
+    if (text && !/[.!?]$/.test(text)) {
+      text = `${text}.`;
+    }
+    return text;
   }
 
   async analyze(transcript: string): Promise<DreamAnalysis> {
     await delay(1200);
     return buildMockAnalysis(transcript);
+  }
+
+  async converse(input: {
+    transcript: string;
+    history: ConversationMessage[];
+  }): Promise<ConversationTurnResult> {
+    await delay(700);
+    const userTurns = input.history.filter((m) => m.role === "user").length;
+
+    if (userTurns === 0) {
+      return {
+        message:
+          "I can almost see it. Was the light more blue and cold, or warm like that orange moon?",
+        readyForDesign: false,
+        enrichedTranscript: input.transcript,
+      };
+    }
+
+    if (userTurns === 1) {
+      const answer = input.history[input.history.length - 1]?.content ?? "";
+      return {
+        message:
+          "Got it. Was anyone else nearby, or did it feel like just the two of you on that street?",
+        readyForDesign: false,
+        enrichedTranscript: `${input.transcript}\n\nAlso: ${answer}`.trim(),
+      };
+    }
+
+    const extras = input.history
+      .filter((m) => m.role === "user")
+      .map((m) => m.content)
+      .join(" ");
+
+    return {
+      message:
+        "That gives me enough to start painting. Choose a style and I'll begin.",
+      readyForDesign: true,
+      enrichedTranscript: `${input.transcript}\n\nMore detail: ${extras}`.trim(),
+    };
   }
 }
 

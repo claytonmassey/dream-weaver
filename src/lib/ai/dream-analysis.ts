@@ -1,6 +1,10 @@
 import { getDreamAnalysisProvider } from "@/lib/ai/providers";
-import { dreamAnalysisSchema } from "@/types/validation";
+import { normalizeDreamAnalysis } from "@/lib/ai/normalize-analysis";
 import type { DreamAnalysis } from "@/types/dream";
+import type {
+  ConversationMessage,
+  ConversationTurnResult,
+} from "@/types/conversation";
 
 export async function cleanupDreamTranscript(
   rawTranscript: string,
@@ -14,5 +18,13 @@ export async function analyzeDream(
 ): Promise<DreamAnalysis> {
   const provider = getDreamAnalysisProvider();
   const raw = await provider.analyze(transcript);
-  return dreamAnalysisSchema.parse(raw);
+  return normalizeDreamAnalysis(raw);
+}
+
+export async function converseAboutDream(input: {
+  transcript: string;
+  history: ConversationMessage[];
+}): Promise<ConversationTurnResult> {
+  const provider = getDreamAnalysisProvider();
+  return provider.converse(input);
 }

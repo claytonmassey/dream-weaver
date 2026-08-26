@@ -8,12 +8,7 @@ export function MoodBadge({
   className?: string;
 }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs tracking-wide text-[var(--accent)]",
-        className,
-      )}
-    >
+    <span className={cn("text-xs text-[var(--text-muted)]", className)}>
       {mood}
     </span>
   );

@@ -26,7 +26,7 @@ export function AudioPlayback({
   if (!src) return null;
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-4 py-3">
+    <>
       <button
         type="button"
         onClick={() => {
@@ -40,23 +40,21 @@ export function AudioPlayback({
             setPlaying(false);
           }
         }}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent)] text-[#1a1612]"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] text-[#1a1612]"
         aria-label={playing ? "Pause" : "Play"}
       >
-        {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+        {playing ? (
+          <Pause className="h-3.5 w-3.5" />
+        ) : (
+          <Play className="h-3.5 w-3.5" />
+        )}
       </button>
-      <div className="flex-1">
-        <p className="text-sm">Playback</p>
-        <p className="text-xs text-[var(--text-muted)]">
-          Listen before submitting
-        </p>
-      </div>
       <audio
         ref={audioRef}
         src={src}
         onEnded={() => setPlaying(false)}
         className="hidden"
       />
-    </div>
+    </>
   );
 }
