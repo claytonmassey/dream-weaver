@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { GUEST_COOKIE, newGuestId } from "@/lib/auth/guest";
-
-const authPages = ["/login", "/forgot-password", "/reset-password"];
+import { GUEST_COOKIE, newGuestId } from "@/lib/auth/guest-cookie";
 
 export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
   const res = NextResponse.next();
 
   // Ensure every visitor has a stable guest id for anonymous capture.
@@ -18,10 +15,6 @@ export async function middleware(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 400,
     });
   }
-
-  // Auth pages stay reachable; nothing else requires login anymore.
-  void authPages;
-  void pathname;
 
   return res;
 }
