@@ -15,7 +15,6 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  // Guests can create dreams; account prompt comes after the image is ready.
   const authResult = await requireUserId();
   if ("error" in authResult) return authResult.error;
 
@@ -23,10 +22,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = createDreamRequestSchema.parse(body);
     const dream = await serviceCreateDream(authResult.userId, parsed);
-    return NextResponse.json(
-      { dream, isGuest: authResult.isGuest },
-      { status: 201 },
-    );
+    return NextResponse.json({ dream }, { status: 201 });
   } catch (error) {
     console.error(error);
     return NextResponse.json(

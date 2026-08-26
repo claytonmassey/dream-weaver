@@ -23,15 +23,12 @@ export function PasswordInput({
       <input
         {...props}
         type={visible ? "text" : "password"}
-        className={cn(
-          "w-full rounded-xl border border-white/10 bg-black/25 py-3 pl-4 pr-12 outline-none placeholder:text-[var(--text-muted)]",
-          className,
-        )}
+        className={cn("auth-input pr-12", className)}
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        className="absolute inset-y-0 right-0 flex items-center px-3.5 text-[var(--text-muted)] transition hover:text-[var(--text)]"
+        className="absolute inset-y-0 right-0 flex items-center px-3.5 text-[#b8a9cc] transition hover:text-[#f0c98a]"
         aria-label={visible ? "Hide password" : "Show password"}
         tabIndex={-1}
       >

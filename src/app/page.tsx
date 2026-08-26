@@ -10,21 +10,9 @@ export default async function HomePage() {
   try {
     await ensureSeeded(user.id);
     const dreams = await dreamRepository.list(user.id);
-    return (
-      <HomeDashboard
-        userName={user.name}
-        dreams={dreams}
-        isGuest={user.isGuest}
-      />
-    );
+    return <HomeDashboard userName={user.name} dreams={dreams} />;
   } catch (error) {
     console.error("[home] failed to load dreams", error);
-    return (
-      <HomeDashboard
-        userName={user.name}
-        dreams={[]}
-        isGuest={user.isGuest}
-      />
-    );
+    return <HomeDashboard userName={user.name} dreams={[]} />;
   }
 }

@@ -1,22 +1,41 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { GUEST_COOKIE, newGuestId } from "@/lib/auth/guest-cookie";
+import { getToken } from "next-auth/jwt";
+
+const publicPaths = [
+  "/login",
+  "/forgot-password",
+  "/reset-password",
+  "/api/auth",
+];
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-
-  // Ensure every visitor has a stable guest id for anonymous capture.
-  if (!req.cookies.get(GUEST_COOKIE)?.value) {
-    res.cookies.set(GUEST_COOKIE, newGuestId(), {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 400,
-    });
+  // Opt-in demo mode skips forced login for local prototyping only.
+  if (process.env.DEMO_MODE === "true") {
+    return NextResponse.next();
   }
 
-  return res;
+  const { pathname } = req.nextUrl;
+  const isPublic = publicPaths.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
+
+  if (isPublic) {
+    return NextResponse.next();
+  }
+
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET ?? "dreamline-dev-secret-change-me",
+  });
+
+  if (!token) {
+    const login = new URL("/login", req.nextUrl.origin);
+    login.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(login);
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

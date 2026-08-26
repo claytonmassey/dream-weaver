@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { AuthField, AuthShell } from "@/components/auth/AuthShell";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 
 function ResetPasswordForm() {
@@ -44,55 +44,50 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-5 py-10">
-      <div className="glass w-full max-w-sm space-y-6 rounded-3xl border border-white/10 p-6 sm:p-8">
-        <div className="space-y-3 text-center">
-          <div className="flex justify-center">
-            <BrandLogo linked={false} height={72} className="mx-auto" />
-          </div>
-          <h1 className="font-display text-2xl">Choose a new password</h1>
-          <p className="text-sm text-[var(--text-muted)]">
-            Enter and confirm your new password.
-          </p>
-        </div>
-
-        <form onSubmit={(e) => void onSubmit(e)} className="space-y-3">
+    <AuthShell
+      title="New password"
+      subtitle="Choose something you’ll remember."
+      footer={
+        <p className="auth-switch">
+          <Link href="/login">Back to sign in</Link>
+        </p>
+      }
+    >
+      <form onSubmit={(e) => void onSubmit(e)} className="space-y-5">
+        <AuthField id="reset-password" label="New password">
           <PasswordInput
+            id="reset-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="New password"
+            placeholder="At least 6 characters"
             required
             minLength={6}
             autoComplete="new-password"
             disabled={!token}
           />
+        </AuthField>
+        <AuthField id="reset-confirm" label="Confirm password">
           <PasswordInput
+            id="reset-confirm"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm new password"
+            placeholder="Re-enter password"
             required
             minLength={6}
             autoComplete="new-password"
             disabled={!token}
           />
-          {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading || !token}
-            className="btn-gold w-full rounded-full py-3 text-sm disabled:opacity-60"
-          >
-            {loading ? "Saving…" : "Update password"}
-          </button>
-        </form>
-
-        <Link
-          href="/login"
-          className="block w-full py-2 text-center text-sm text-[var(--text-muted)]"
+        </AuthField>
+        {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
+        <button
+          type="submit"
+          disabled={loading || !token}
+          className="btn-gold w-full rounded-full py-3.5 text-[1.02rem] disabled:opacity-60"
         >
-          Back to sign in
-        </Link>
-      </div>
-    </div>
+          {loading ? "Saving…" : "Update password"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }
 

@@ -15,9 +15,7 @@ export default function SettingsPage() {
       <div>
         <h1 className="font-display text-3xl">Profile</h1>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
-          {session?.user
-            ? "Your dreams are private to this account."
-            : "You’re browsing as a guest. Create an account to save dreams."}
+          Your dreams are private to this account.
         </p>
       </div>
 
@@ -44,13 +42,13 @@ export default function SettingsPage() {
               }}
               className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-medium text-[#1a1612]"
             >
-              Create account / Sign in
+              Sign in
             </button>
           )}
           {session?.user && (
             <button
               type="button"
-              onClick={() => void signOut({ callbackUrl: "/" })}
+              onClick={() => void signOut({ callbackUrl: "/login" })}
               className="rounded-full border border-white/10 px-5 py-2.5 text-sm"
             >
               Sign out

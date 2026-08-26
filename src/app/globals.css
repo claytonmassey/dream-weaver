@@ -163,9 +163,139 @@ a {
 }
 
 .btn-gold {
-  background: linear-gradient(90deg, #c9955a 0%, #e8c48a 50%, #d4a86a 100%);
+  background: linear-gradient(105deg, #c9955a 0%, #f0d09a 48%, #d4a86a 100%);
   color: #1a1020;
   font-weight: 600;
+  letter-spacing: 0.01em;
+  transition:
+    transform 160ms ease,
+    filter 160ms ease,
+    opacity 160ms ease;
+}
+
+.btn-gold:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.btn-gold:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+/* Auth screens */
+.auth-shell {
+  background:
+    radial-gradient(
+      ellipse 80% 55% at 50% 18%,
+      rgba(224, 184, 122, 0.12) 0%,
+      transparent 58%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(6, 3, 14, 0.35) 0%,
+      rgba(6, 3, 14, 0.55) 45%,
+      rgba(6, 3, 14, 0.72) 100%
+    );
+}
+
+.auth-panel {
+  background: linear-gradient(
+    165deg,
+    rgba(28, 20, 44, 0.97) 0%,
+    rgba(12, 8, 24, 0.98) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(224, 184, 122, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+}
+
+.auth-panel-shine {
+  background: linear-gradient(
+    90deg,
+    transparent 5%,
+    rgba(240, 201, 138, 0.55) 50%,
+    transparent 95%
+  );
+}
+
+.auth-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #e8dff4;
+}
+
+.auth-input {
+  width: 100%;
+  min-height: 3.15rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #faf7ff;
+  padding: 0.9rem 1.05rem;
+  font-size: 1rem;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.auth-input::placeholder {
+  color: #9e90b4;
+}
+
+.auth-input:hover:not(:disabled):not(:focus) {
+  border-color: rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-input:focus {
+  border-color: rgba(232, 196, 138, 0.7);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 0 4px rgba(224, 184, 122, 0.16);
+}
+
+.auth-input:disabled {
+  opacity: 0.5;
+}
+
+.auth-muted {
+  color: #b4a6c8;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.85em;
+}
+
+.auth-link {
+  color: #f0c98a;
+  font-weight: 600;
+  transition: color 150ms ease;
+}
+
+.auth-link:hover {
+  color: #f7dbad;
+}
+
+.auth-switch {
+  color: #cbbfdc;
+  font-size: 0.95rem;
+}
+
+.auth-switch button,
+.auth-switch a {
+  color: #f0c98a;
+  font-weight: 600;
+}
+
+.auth-switch button:hover,
+.auth-switch a:hover {
+  color: #f7dbad;
 }
 
 /* Primary speak / remember mic — gradient disc with depth + halo */

@@ -251,13 +251,11 @@ export function DreamComposer() {
       });
       const createPayload = (await createRes.json()) as {
         dream?: Dream;
-        isGuest?: boolean;
       };
       if (!createRes.ok || !createPayload.dream) {
         throw new Error("Save failed");
       }
       const dream = createPayload.dream;
-      const createdAsGuest = Boolean(createPayload.isGuest);
       setSavedDreamId(dream.id);
 
       const attachedFiles = new Set<File>();
@@ -320,15 +318,12 @@ export function DreamComposer() {
         }),
       });
 
-      const claimQuery = createdAsGuest ? "&claim=1" : "";
       if (!imageRes.ok) {
-        router.push(`/dream/${dream.id}?imageFailed=1${claimQuery}`);
+        router.push(`/dream/${dream.id}?imageFailed=1`);
         return;
       }
 
-      router.push(
-        createdAsGuest ? `/dream/${dream.id}?claim=1` : `/dream/${dream.id}`,
-      );
+      router.push(`/dream/${dream.id}`);
     } catch {
       setError(
         savedDreamId

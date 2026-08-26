@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { AuthField, AuthShell } from "@/components/auth/AuthShell";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 
 function LoginForm() {
@@ -54,7 +54,6 @@ function LoginForm() {
           throw new Error(data.error || "Couldn't create account.");
         }
 
-        // Create the session immediately after signup.
         const result = await signIn("credentials", {
           email: normalizedEmail,
           password,
@@ -65,11 +64,6 @@ function LoginForm() {
           throw new Error(
             "Account created, but sign-in failed. Try signing in.",
           );
-        }
-        try {
-          await fetch("/api/auth/claim-guest", { method: "POST" });
-        } catch {
-          // ignore
         }
         window.location.assign(result.url ?? "/");
         return;
@@ -84,11 +78,6 @@ function LoginForm() {
       if (result?.error || !result?.ok) {
         throw new Error("Invalid email or password.");
       }
-      try {
-        await fetch("/api/auth/claim-guest", { method: "POST" });
-      } catch {
-        // ignore
-      }
       window.location.assign(result.url ?? "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -97,102 +86,109 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-5 py-10">
-      <div className="glass w-full max-w-sm space-y-6 rounded-3xl border border-white/10 p-6 sm:p-8">
-        <div className="space-y-3 text-center">
-          <div className="flex justify-center">
-            <BrandLogo linked={false} height={72} className="mx-auto" />
-          </div>
-        <p className="text-sm text-[var(--text-muted)]">
-          {mode === "signin"
-            ? "Sign in to keep your dreams private to you"
-            : "Create an account when you’re ready to save"}
+    <AuthShell
+      title={mode === "signin" ? "Welcome back" : "Create account"}
+      subtitle={
+        mode === "signin"
+          ? "Sign in to your private dream journal."
+          : "A quiet place for the dreams you want to keep."
+      }
+      footer={
+        <p className="auth-switch">
+          {mode === "signin" ? "Need an account? " : "Already have an account? "}
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setInfo(null);
+              setConfirmPassword("");
+              setMode((m) => (m === "signin" ? "signup" : "signin"));
+            }}
+          >
+            {mode === "signin" ? "Create one" : "Sign in"}
+          </button>
         </p>
-        </div>
-
-        <form onSubmit={(e) => void onSubmit(e)} className="space-y-3">
-          {mode === "signup" && (
+      }
+    >
+      <form onSubmit={(e) => void onSubmit(e)} className="space-y-5">
+        {mode === "signup" && (
+          <AuthField id="auth-name" label="Name" hint="(optional)">
             <input
+              id="auth-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Name (optional)"
-              className="w-full rounded-xl border border-white/10 bg-black/25 px-4 py-3 outline-none placeholder:text-[var(--text-muted)]"
+              placeholder="Your name"
+              className="auth-input"
               autoComplete="name"
             />
-          )}
+          </AuthField>
+        )}
+        <AuthField id="auth-email" label="Email">
           <input
+            id="auth-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full rounded-xl border border-white/10 bg-black/25 px-4 py-3 outline-none placeholder:text-[var(--text-muted)]"
+            placeholder="you@example.com"
+            className="auth-input"
             required
             autoComplete="email"
           />
+        </AuthField>
+        <AuthField id="auth-password" label="Password">
           <PasswordInput
+            id="auth-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            placeholder="At least 6 characters"
             required
             minLength={6}
             autoComplete={
               mode === "signup" ? "new-password" : "current-password"
             }
           />
-          {mode === "signup" && (
+        </AuthField>
+        {mode === "signup" && (
+          <AuthField id="auth-confirm" label="Confirm password">
             <PasswordInput
+              id="auth-confirm"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm password"
+              placeholder="Re-enter password"
               required
               minLength={6}
               autoComplete="new-password"
             />
-          )}
-          {mode === "signin" && (
-            <div className="flex justify-end">
-              <Link
-                href="/forgot-password"
-                className="text-sm text-[var(--accent)]"
-              >
-                Forgot password?
-              </Link>
-            </div>
-          )}
-          {info && <p className="text-sm text-[var(--success)]">{info}</p>}
-          {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-gold w-full rounded-full py-3 text-sm disabled:opacity-60"
-          >
-            {loading
-              ? mode === "signup"
-                ? "Creating…"
-                : "Signing in…"
-              : mode === "signup"
-                ? "Create account"
-                : "Sign in"}
-          </button>
-        </form>
+          </AuthField>
+        )}
+
+        {mode === "signin" && (
+          <div className="-mt-1 flex justify-end">
+            <Link href="/forgot-password" className="auth-link text-sm">
+              Forgot password?
+            </Link>
+          </div>
+        )}
+
+        {info && <p className="text-sm text-[var(--success)]">{info}</p>}
+        {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
 
         <button
-          type="button"
-          onClick={() => {
-            setError(null);
-            setInfo(null);
-            setConfirmPassword("");
-            setMode((m) => (m === "signin" ? "signup" : "signin"));
-          }}
-          className="w-full py-2 text-sm text-[var(--text-muted)]"
+          type="submit"
+          disabled={loading}
+          className="btn-gold mt-1 w-full rounded-full py-3.5 text-[1.02rem] disabled:opacity-60"
         >
-          {mode === "signin"
-            ? "Need an account? Create one"
-            : "Already have an account? Sign in"}
+          {loading
+            ? mode === "signup"
+              ? "Creating…"
+              : "Signing in…"
+            : mode === "signup"
+              ? "Create account"
+              : "Sign in"}
         </button>
-      </div>
-    </div>
+      </form>
+    </AuthShell>
   );
 }
 

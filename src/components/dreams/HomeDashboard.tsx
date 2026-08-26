@@ -24,11 +24,9 @@ function isSameMonth(iso: string, now = new Date()): boolean {
 export function HomeDashboard({
   userName,
   dreams,
-  isGuest = false,
 }: {
   userName?: string | null;
   dreams: DreamListItem[];
-  isGuest?: boolean;
 }) {
   const hour = new Date().getHours();
   const greet = greetingForHour(hour);
@@ -39,32 +37,14 @@ export function HomeDashboard({
 
   return (
     <div className="mx-auto w-full max-w-lg space-y-8 pb-4 lg:max-w-2xl">
-      <header className="space-y-2">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <p className="text-sm text-[var(--text-muted)]">
-              {greet}
-              {!isGuest && name ? `, ${name}` : ""}
-            </p>
-            <h1 className="font-display text-3xl leading-tight tracking-tight sm:text-4xl">
-              Your dream space
-            </h1>
-          </div>
-          {isGuest && (
-            <Link
-              href="/login"
-              className="shrink-0 rounded-full border border-white/15 px-3.5 py-2 text-xs text-[var(--accent)]"
-            >
-              Sign in
-            </Link>
-          )}
-        </div>
-        {isGuest && (
-          <p className="text-sm text-[var(--text-muted)]">
-            Capture freely — after your image is ready, you can create an
-            account to keep it.
-          </p>
-        )}
+      <header className="space-y-1">
+        <p className="text-sm text-[var(--text-muted)]">
+          {greet}
+          {name ? `, ${name}` : ""}
+        </p>
+        <h1 className="font-display text-3xl leading-tight tracking-tight sm:text-4xl">
+          Your dream space
+        </h1>
       </header>
 
       <Link
