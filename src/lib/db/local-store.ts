@@ -163,6 +163,19 @@ export const localDb = {
     return user;
   },
 
+  async updateUserProfile(
+    userId: string,
+    input: { name?: string | null; image?: string | null },
+  ): Promise<UserAccount | null> {
+    const store = await ensureStore();
+    const user = store.users.find((u) => u.id === userId);
+    if (!user) return null;
+    if (input.name !== undefined) user.name = input.name;
+    if (input.image !== undefined) user.image = input.image;
+    await writeStore(store);
+    return user;
+  },
+
   async listDreams(userId: string): Promise<DreamListItem[]> {
     const store = await ensureStore();
     return store.dreams

@@ -28,6 +28,7 @@ export default function ForgotPasswordPage() {
         error?: string;
         message?: string;
         resetUrl?: string;
+        emailConfigured?: boolean;
       };
       if (!res.ok) {
         throw new Error(data.error || "Couldn't start password reset.");
@@ -37,6 +38,11 @@ export default function ForgotPasswordPage() {
           "If an account exists for that email, you’ll get a reset link shortly.",
       );
       if (data.resetUrl) setResetUrl(data.resetUrl);
+      if (data.emailConfigured === false && !data.resetUrl) {
+        setError(
+          "Email sending isn’t configured on the server. Add RESEND_API_KEY in Vercel.",
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {

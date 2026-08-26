@@ -54,6 +54,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
     }),
   );
 }
@@ -69,12 +70,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       try {
         if (account?.provider === "google" && user.email) {
-          const existing = await userStore.findByEmail(user.email);
+          const email = user.email.toLowerCase().trim();
+          const existing = await userStore.findByEmail(email);
           if (!existing) {
             await userStore.create({
-              email: user.email,
+              email,
               name: user.name ?? undefined,
               image: user.image ?? undefined,
+            });
+          } else if (!existing.image && user.image) {
+            await userStore.updateProfile(existing.id, {
+              image: user.image,
+              name: existing.name ?? user.name ?? null,
             });
           }
         }
@@ -84,14 +91,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return false;
       }
     },
-    async jwt({ token, user }) {
-      // Prefer the authorize/user payload — avoid an extra DB round-trip that
-      // can fail if the Postgres connection was dropped mid-request.
+    async jwt({ token, user, account, trigger, session }) {
       if (user) {
+        // Google IDs are not our DB ids — resolve by email.
+        if (account?.provider === "google" && user.email) {
+          try {
+            const dbUser = await userStore.findByEmail(
+              user.email.toLowerCase().trim(),
+            );
+            if (dbUser) {
+              token.sub = dbUser.id;
+              token.email = dbUser.email;
+              token.name = dbUser.name ?? user.name;
+              token.picture = dbUser.image ?? user.image;
+              return token;
+            }
+          } catch (error) {
+            console.error("[auth] google jwt resolve failed", error);
+          }
+        }
+
         if (user.id) token.sub = user.id;
         if (user.email) token.email = user.email;
         if (user.name) token.name = user.name;
+        if (user.image) token.picture = user.image;
         return token;
+      }
+
+      if (trigger === "update" && session) {
+        if (typeof session.name === "string") {
+          token.name = session.name;
+        }
+        if (session.name === null) {
+          token.name = null;
+        }
       }
 
       if ((!token.email || !token.name) && token.sub) {
@@ -100,6 +133,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (dbUser) {
             token.email = dbUser.email;
             token.name = dbUser.name;
+            if (dbUser.image) token.picture = dbUser.image;
           }
         } catch (error) {
           console.error("[auth] jwt enrichment failed", error);
@@ -112,7 +146,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user && token.sub) {
         session.user.id = token.sub;
         session.user.email = (token.email as string) ?? session.user.email;
-        session.user.name = (token.name as string) ?? session.user.name;
+        session.user.name =
+          (token.name as string | null | undefined) ?? session.user.name;
+        if (token.picture) {
+          session.user.image = token.picture as string;
+        }
       }
       return session;
     },

@@ -32,4 +32,11 @@ export const userStore = {
   updatePassword(email: string, passwordHash: string) {
     return db().updateUserPassword(email, passwordHash);
   },
+
+  updateProfile(
+    userId: string,
+    input: { name?: string | null; image?: string | null },
+  ) {
+    return db().updateUserProfile(userId, input);
+  },
 };

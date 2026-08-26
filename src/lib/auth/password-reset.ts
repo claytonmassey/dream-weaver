@@ -11,16 +11,33 @@ function hashToken(raw: string): string {
   return createHash("sha256").update(raw).digest("hex");
 }
 
-function appBaseUrl(): string {
-  return (
+/** Prefer AUTH_URL, then the incoming request host, then Vercel URL. */
+export function appBaseUrl(request?: Request): string {
+  const fromEnv =
     process.env.AUTH_URL?.replace(/\/$/, "") ||
-    process.env.NEXTAUTH_URL?.replace(/\/$/, "") ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-    "http://localhost:3000"
-  );
+    process.env.NEXTAUTH_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+
+  if (request) {
+    const host =
+      request.headers.get("x-forwarded-host") || request.headers.get("host");
+    const proto =
+      request.headers.get("x-forwarded-proto") ||
+      (host?.includes("localhost") ? "http" : "https");
+    if (host) return `${proto}://${host}`.replace(/\/$/, "");
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`.replace(/\/$/, "");
+  }
+
+  return "http://localhost:3000";
 }
 
-export async function createPasswordResetToken(email: string): Promise<{
+export async function createPasswordResetToken(
+  email: string,
+  request?: Request,
+): Promise<{
   rawToken: string;
   resetUrl: string;
 }> {
@@ -42,14 +59,14 @@ export async function createPasswordResetToken(email: string): Promise<{
     memoryTokens.set(token, { identifier, token, expires });
   }
 
-  const resetUrl = `${appBaseUrl()}/reset-password?token=${encodeURIComponent(rawToken)}`;
+  const resetUrl = `${appBaseUrl(request)}/reset-password?token=${encodeURIComponent(rawToken)}`;
   return { rawToken, resetUrl };
 }
 
 export async function consumePasswordResetToken(
   rawToken: string,
 ): Promise<string | null> {
-  const token = hashToken(rawToken);
+  const token = hashToken(rawToken.trim());
   const now = new Date();
 
   if (usePrisma()) {
@@ -73,7 +90,7 @@ export async function sendPasswordResetEmail(input: {
   email: string;
   resetUrl: string;
 }): Promise<{ sent: boolean; reason?: string }> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.EMAIL_FROM || "dreamweava <onboarding@resend.dev>";
 
   if (!apiKey) {
@@ -83,32 +100,37 @@ export async function sendPasswordResetEmail(input: {
     return { sent: false, reason: "email_not_configured" };
   }
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [input.email],
-      subject: "Reset your dreamweava password",
-      html: `
-        <p>We received a request to reset your dreamweava password.</p>
-        <p><a href="${input.resetUrl}">Choose a new password</a></p>
-        <p>This link expires in one hour. If you didn’t ask for this, you can ignore the email.</p>
-      `,
-      text: `Reset your dreamweava password:\n${input.resetUrl}\n\nThis link expires in one hour.`,
-    }),
-  });
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: [input.email],
+        subject: "Reset your dreamweava password",
+        html: `
+          <p>We received a request to reset your dreamweava password.</p>
+          <p><a href="${input.resetUrl}">Choose a new password</a></p>
+          <p>This link expires in one hour. If you didn’t ask for this, you can ignore the email.</p>
+        `,
+        text: `Reset your dreamweava password:\n${input.resetUrl}\n\nThis link expires in one hour.`,
+      }),
+    });
 
-  if (!res.ok) {
-    const detail = await res.text();
-    console.error("[password-reset] Resend failed:", detail);
+    if (!res.ok) {
+      const detail = await res.text();
+      console.error("[password-reset] Resend failed:", detail);
+      return { sent: false, reason: "send_failed" };
+    }
+
+    return { sent: true };
+  } catch (error) {
+    console.error("[password-reset] Resend error:", error);
     return { sent: false, reason: "send_failed" };
   }
-
-  return { sent: true };
 }
 
 export function canExposeResetLink(): boolean {
