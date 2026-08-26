@@ -295,92 +295,139 @@ export function DreamConversation({
     ) : null;
 
   if (phase === "review") {
+    const activeStyle =
+      DREAM_VISUAL_STYLES.find((s) => s.id === selectedStyle) ??
+      DREAM_VISUAL_STYLES[0];
+
     return (
-      <div className="flex h-[calc(100dvh-11.5rem)] flex-col gap-4 lg:h-[calc(100dvh-5rem)]">
+      <div className="dream-review flex h-[calc(100dvh-11.5rem)] flex-col lg:h-[calc(100dvh-5rem)]">
         <button
           type="button"
           onClick={() => {
             setEditing(false);
             setPhase("chat");
           }}
-          className="flex shrink-0 items-center gap-1.5 self-start text-sm text-[var(--accent)]"
+          className="mb-4 flex shrink-0 items-center gap-1.5 self-start text-sm text-[var(--accent)]"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
         </button>
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-2 [-webkit-overflow-scrolling:touch]">
-          <div className="flex items-end gap-2.5">
-            <BrandAvatar />
-            <div className="max-w-[85%] rounded-2xl glass px-4 py-3 text-base leading-relaxed text-[var(--text)]">
-              Thanks, I&apos;ve captured your dream. Pick a style, then I&apos;ll
-              paint it ✨
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-[var(--accent)]/40 glass p-4">
-            <p className="mb-2 text-xs font-medium tracking-[0.18em] text-[var(--accent)] uppercase">
-              Your Dream
+        <div className="dream-review-scroll min-h-0 flex-1 space-y-8 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]">
+          <header className="dream-review-enter space-y-2 text-center sm:text-left">
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--accent)]">
+              Ready to paint
             </p>
+            <h2 className="font-display text-[1.65rem] leading-tight tracking-tight text-[var(--text)] sm:text-3xl">
+              How should this dream look?
+            </h2>
+            <p className="mx-auto max-w-md text-sm leading-relaxed text-[var(--text-muted)] sm:mx-0">
+              Choose a visual style, then I&apos;ll paint a single frame from
+              what you remember.
+            </p>
+          </header>
+
+          <section
+            className="dream-review-enter dream-review-enter-delay-1 space-y-3"
+            aria-labelledby="dream-review-transcript"
+          >
+            <div className="flex items-baseline justify-between gap-3">
+              <h3
+                id="dream-review-transcript"
+                className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--accent)]"
+              >
+                Your dream
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditing((v) => !v)}
+                className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] transition hover:text-[var(--accent)]"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                {editing ? "Done" : "Edit"}
+              </button>
+            </div>
+
             {editing ? (
               <textarea
                 value={enriched}
                 onChange={(e) => setEnriched(e.target.value)}
-                rows={8}
-                className="w-full resize-none bg-transparent text-base leading-relaxed outline-none"
+                rows={7}
+                className="dream-review-transcript w-full resize-none rounded-none border-0 border-b border-[var(--accent)]/35 bg-transparent pb-3 text-base leading-relaxed text-[var(--text)] outline-none"
                 aria-label="Edit dream transcript"
+                autoFocus
               />
             ) : (
-              <p className="whitespace-pre-wrap text-base leading-relaxed text-[var(--text)]">
+              <p className="dream-review-transcript whitespace-pre-wrap text-base leading-relaxed text-[#e8dff4]">
                 {enriched}
               </p>
             )}
-          </div>
+          </section>
 
-          <div className="rounded-2xl border border-white/10 glass p-4">
-            <p className="mb-3 text-xs font-medium tracking-[0.18em] text-[var(--accent)] uppercase">
-              Select a Style
-            </p>
-            <div className="flex flex-col gap-2">
+          <section
+            className="dream-review-enter dream-review-enter-delay-2 space-y-3"
+            aria-labelledby="dream-review-styles"
+          >
+            <div className="space-y-1">
+              <h3
+                id="dream-review-styles"
+                className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--accent)]"
+              >
+                Style
+              </h3>
+              <p className="text-sm text-[var(--text-muted)]">
+                {activeStyle?.mood}
+              </p>
+            </div>
+
+            <div
+              className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0"
+              role="listbox"
+              aria-label="Visual style"
+            >
               {DREAM_VISUAL_STYLES.map((style) => {
                 const active = selectedStyle === style.id;
                 return (
                   <button
                     key={style.id}
                     type="button"
+                    role="option"
+                    aria-selected={active}
                     onClick={() => setSelectedStyle(style.id)}
                     className={cn(
-                      "flex min-h-14 flex-col items-start justify-center rounded-2xl px-4 py-3 text-left transition",
+                      "dream-style-chip min-w-[7.25rem] shrink-0 rounded-2xl px-3.5 py-3.5 text-left transition sm:min-w-0",
                       active
-                        ? "bg-[var(--accent-soft)] ring-1 ring-[var(--accent)]/60"
-                        : "border border-white/10 bg-black/20 active:bg-white/5",
+                        ? "dream-style-chip-active"
+                        : "dream-style-chip-idle",
                     )}
                   >
-                    <span className="text-sm font-medium text-[var(--text)]">
+                    <span className="block text-sm font-medium text-[var(--text)]">
                       {style.label}
                     </span>
-                    <span className="mt-0.5 text-xs text-[var(--text-muted)]">
+                    <span className="mt-1 block text-[0.7rem] leading-snug text-[var(--text-muted)]">
                       {style.hint}
                     </span>
                   </button>
                 );
               })}
             </div>
-          </div>
+          </section>
 
-          {referenceStrip}
-          {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
+          {referenceStrip ? (
+            <section className="dream-review-enter dream-review-enter-delay-3 space-y-2">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--accent)]">
+                References
+              </p>
+              {referenceStrip}
+            </section>
+          ) : null}
+
+          {error && (
+            <p className="text-sm text-[var(--danger)]">{error}</p>
+          )}
         </div>
 
-        <div className="flex shrink-0 flex-col gap-3 border-t border-white/5 pt-3">
-          <button
-            type="button"
-            onClick={() => setEditing((v) => !v)}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-white/15 glass text-sm font-medium"
-          >
-            <Pencil className="h-4 w-4" />
-            {editing ? "Done editing" : "Edit transcript"}
-          </button>
+        <div className="dream-review-enter dream-review-enter-delay-3 flex shrink-0 flex-col gap-3 border-t border-white/5 pt-4">
           <button
             type="button"
             disabled={!enriched.trim() || identifying || !selectedStyle}
@@ -390,12 +437,12 @@ export function DreamConversation({
             className="btn-gold flex min-h-12 w-full items-center justify-center gap-2 rounded-full text-sm disabled:opacity-40"
           >
             <Sparkles className="h-4 w-4" />
-            Generate Dream Image
+            Generate dream image
           </button>
           <button
             type="button"
             onClick={onStartOver}
-            className="flex items-center justify-center gap-2 py-2 text-sm text-[var(--text-muted)]"
+            className="flex items-center justify-center gap-2 py-1.5 text-sm text-[var(--text-muted)] transition hover:text-[var(--text)]"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             Start over

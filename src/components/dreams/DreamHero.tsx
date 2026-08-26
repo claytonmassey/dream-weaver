@@ -1,8 +1,11 @@
 import Image from "next/image";
+import { DreamImagePending } from "@/components/dreams/DreamImagePending";
 import { formatDreamDate } from "@/lib/utils/cn";
 import type { Dream } from "@/types/dream";
 
 export function DreamHero({ dream }: { dream: Dream }) {
+  const pending = dream.imageStatus === "pending" && !dream.imageUrl;
+
   return (
     <section className="space-y-4">
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-[var(--bg-elevated)] sm:aspect-[16/10]">
@@ -16,6 +19,8 @@ export function DreamHero({ dream }: { dream: Dream }) {
             sizes="100vw"
             unoptimized
           />
+        ) : pending ? (
+          <DreamImagePending dreamId={dream.id} />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-[var(--text-muted)]">
             {dream.imageStatus === "failed"

@@ -17,10 +17,36 @@ export const DREAM_VISUAL_STYLES: Array<{
   id: DreamVisualStyle;
   label: string;
   hint: string;
+  mood: string;
 }> = [
-  { id: "cinematic", label: "Cinematic", hint: "Film still, dramatic light" },
-  { id: "realistic", label: "Realistic", hint: "Like a photograph" },
-  { id: "surreal", label: "Surreal", hint: "Strange and dreamlike" },
-  { id: "illustrated", label: "Illustrated", hint: "Drawn storybook feel" },
-  { id: "painting", label: "Painting", hint: "Brush and canvas" },
+  {
+    id: "cinematic",
+    label: "Cinematic",
+    hint: "Film still, dramatic light",
+    mood: "Wide · lit like a movie",
+  },
+  {
+    id: "realistic",
+    label: "Realistic",
+    hint: "Like a photograph",
+    mood: "Natural · documentary",
+  },
+  {
+    id: "surreal",
+    label: "Surreal",
+    hint: "Strange and dreamlike",
+    mood: "Uncanny · soft logic",
+  },
+  {
+    id: "illustrated",
+    label: "Illustrated",
+    hint: "Drawn storybook feel",
+    mood: "Ink · storybook",
+  },
+  {
+    id: "painting",
+    label: "Painting",
+    hint: "Brush and canvas",
+    mood: "Oils · gallery light",
+  },
 ];

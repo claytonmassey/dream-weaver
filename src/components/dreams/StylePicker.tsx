@@ -15,34 +15,46 @@ export function StylePicker({
   onContinue: () => void;
   onBack: () => void;
 }) {
+  const active =
+    DREAM_VISUAL_STYLES.find((s) => s.id === selected) ?? DREAM_VISUAL_STYLES[0];
+
   return (
-    <div className="flex flex-col gap-6 pt-2">
-      <div className="space-y-2">
-        <h2 className="font-display text-2xl leading-tight">
-          How should it look?
+    <div className="dream-review flex flex-col gap-8 pt-2">
+      <header className="dream-review-enter space-y-2">
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-[var(--accent)]">
+          Ready to paint
+        </p>
+        <h2 className="font-display text-2xl leading-tight sm:text-3xl">
+          How should this dream look?
         </h2>
         <p className="text-sm text-[var(--text-muted)]">
-          Pick a style, then I&apos;ll start painting your dream.
+          {active?.mood ?? "Pick a style, then I'll start painting."}
         </p>
-      </div>
+      </header>
 
-      <div className="flex flex-col gap-2">
+      <div
+        className="dream-review-enter dream-review-enter-delay-1 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-5 sm:overflow-visible"
+        role="listbox"
+        aria-label="Visual style"
+      >
         {DREAM_VISUAL_STYLES.map((style) => {
-          const active = selected === style.id;
+          const isActive = selected === style.id;
           return (
             <button
               key={style.id}
               type="button"
+              role="option"
+              aria-selected={isActive}
               onClick={() => onSelect(style.id)}
               className={cn(
-                "flex min-h-16 flex-col items-start justify-center rounded-2xl px-5 py-4 text-left transition",
-                active
-                  ? "bg-[var(--accent-soft)] ring-1 ring-[var(--accent)]/50"
-                  : "bg-[var(--bg-elevated)] active:bg-[var(--bg-soft)]",
+                "dream-style-chip min-w-[7.25rem] shrink-0 rounded-2xl px-3.5 py-3.5 text-left transition sm:min-w-0",
+                isActive ? "dream-style-chip-active" : "dream-style-chip-idle",
               )}
             >
-              <span className="font-display text-lg">{style.label}</span>
-              <span className="mt-0.5 text-xs text-[var(--text-muted)]">
+              <span className="block text-sm font-medium text-[var(--text)]">
+                {style.label}
+              </span>
+              <span className="mt-1 block text-[0.7rem] leading-snug text-[var(--text-muted)]">
                 {style.hint}
               </span>
             </button>
@@ -50,12 +62,12 @@ export function StylePicker({
         })}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="dream-review-enter dream-review-enter-delay-2 flex items-center gap-4">
         <button
           type="button"
           disabled={!selected}
           onClick={onContinue}
-          className="min-h-11 flex-1 rounded-full bg-[var(--accent)] text-sm font-medium text-[#1a1612] disabled:opacity-40"
+          className="btn-gold min-h-11 flex-1 rounded-full text-sm font-medium disabled:opacity-40"
         >
           Paint my dream
         </button>

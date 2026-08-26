@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DreamEventList } from "@/components/dreams/DreamEventList";
 import { DreamHero } from "@/components/dreams/DreamHero";
-import { DreamImagePoller } from "@/components/dreams/DreamImagePoller";
 import { ImageFailedBanner } from "@/components/dreams/ImageFailedBanner";
 import { DeleteDreamButton } from "@/components/dreams/DeleteDreamButton";
 import { requirePageUser } from "@/lib/auth/session";
@@ -26,8 +25,6 @@ export default async function DreamDetailPage({ params, searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-lg space-y-8 sm:space-y-10 lg:max-w-5xl lg:space-y-12">
-      <DreamImagePoller dreamId={dream.id} imageStatus={dream.imageStatus} />
-
       {(imageFailed || dream.imageStatus === "failed") && (
         <ImageFailedBanner dreamId={dream.id} />
       )}
