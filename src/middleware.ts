@@ -9,6 +9,30 @@ const publicPaths = [
   "/api/auth",
 ];
 
+function authSecret() {
+  return (
+    process.env.AUTH_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    "dreamline-dev-secret-change-me"
+  );
+}
+
+/** Auth.js uses `__Secure-` cookie names on HTTPS; getToken must match. */
+function sessionCookieOptions(req: NextRequest) {
+  if (req.cookies.has("__Secure-authjs.session-token")) {
+    return { secureCookie: true as const };
+  }
+  if (req.cookies.has("authjs.session-token")) {
+    return { secureCookie: false as const };
+  }
+  // No cookie yet — infer from request (production / HTTPS).
+  const secure =
+    req.nextUrl.protocol === "https:" ||
+    process.env.AUTH_URL?.startsWith("https://") === true ||
+    process.env.VERCEL === "1";
+  return { secureCookie: secure };
+}
+
 export async function middleware(req: NextRequest) {
   // Opt-in demo mode skips forced login for local prototyping only.
   if (process.env.DEMO_MODE === "true") {
@@ -26,7 +50,8 @@ export async function middleware(req: NextRequest) {
 
   const token = await getToken({
     req,
-    secret: process.env.AUTH_SECRET ?? "dreamline-dev-secret-change-me",
+    secret: authSecret(),
+    ...sessionCookieOptions(req),
   });
 
   if (!token) {

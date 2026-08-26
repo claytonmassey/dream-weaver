@@ -48,7 +48,7 @@ function LoginForm() {
     }
 
     const nextUrl = result.url ?? "/";
-    if (nextUrl.includes("/api/auth/error") || nextUrl.includes("error=")) {
+    if (nextUrl.includes("/api/auth/error") || /[?&]error=/.test(nextUrl)) {
       throw new Error(
         mode === "signup"
           ? "Account created, but sign-in failed. Try signing in."
@@ -56,7 +56,13 @@ function LoginForm() {
       );
     }
 
-    window.location.assign(nextUrl.startsWith("http") ? nextUrl : "/");
+    // Hard navigation so the session cookie is included on the next request.
+    const callback = searchParams.get("callbackUrl");
+    const dest =
+      callback && callback.startsWith("/") && !callback.startsWith("//")
+        ? callback
+        : "/";
+    window.location.assign(dest);
   }
 
   async function onSubmit(e: React.FormEvent) {
