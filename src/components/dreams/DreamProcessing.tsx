@@ -91,11 +91,11 @@ export function DreamProcessing({ label }: { label?: string }) {
             factVisible ? "opacity-100" : "opacity-0"
           }`}
         >
-          <p className="mb-2 flex items-center justify-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--accent)]">
+          <p className="mb-2 flex items-center justify-center gap-1.5 text-xs font-medium uppercase tracking-[0.18em] text-[var(--accent)]">
             <Sparkles className="h-3 w-3" />
             Dream fact
           </p>
-          <p className="text-pretty text-[15px] leading-relaxed text-[#d4c8e4]">
+          <p className="text-pretty text-base leading-relaxed text-[#d4c8e4]">
             {fact}
           </p>
         </div>

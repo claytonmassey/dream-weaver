@@ -253,8 +253,8 @@ export function RealtimeDreamVoice({
             key={`${line.role}-${index}`}
             className={
               line.role === "assistant"
-                ? "max-w-[92%] rounded-2xl bg-[var(--bg-elevated)] px-4 py-3 text-[15px] leading-relaxed"
-                : "ml-auto max-w-[92%] rounded-2xl bg-[var(--accent-soft)] px-4 py-3 text-[15px] leading-relaxed"
+                ? "max-w-[92%] rounded-2xl bg-[var(--bg-elevated)] px-4 py-3 text-base leading-relaxed"
+                : "ml-auto max-w-[92%] rounded-2xl bg-[var(--accent-soft)] px-4 py-3 text-base leading-relaxed"
             }
           >
             {line.content}

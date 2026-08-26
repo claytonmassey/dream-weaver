@@ -38,7 +38,7 @@ export default async function DreamDetailPage({ params, searchParams }: Props) {
 
       <section className="space-y-3 sm:space-y-4">
         <h2 className="font-display text-xl sm:text-2xl">Your Dream</h2>
-        <p className="max-w-3xl whitespace-pre-wrap text-[15px] leading-relaxed text-[var(--text-muted)] sm:text-base">
+        <p className="max-w-3xl whitespace-pre-wrap text-base leading-relaxed text-[var(--text-muted)] sm:text-base">
           {dream.cleanedTranscript}
         </p>
       </section>

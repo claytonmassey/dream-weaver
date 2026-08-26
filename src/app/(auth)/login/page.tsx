@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -8,14 +9,19 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 function LoginForm() {
   const searchParams = useSearchParams();
   const configError = searchParams.get("error") === "config";
+  const resetOk = searchParams.get("reset") === "1";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(
     configError
       ? "Server storage isn’t configured. Set DATABASE_URL and AUTH_SECRET in Vercel."
       : null,
+  );
+  const [info, setInfo] = useState<string | null>(
+    resetOk ? "Password updated. Sign in with your new password." : null,
   );
   const [loading, setLoading] = useState(false);
 
@@ -23,15 +29,20 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setInfo(null);
 
     try {
       if (mode === "signup") {
+        if (password !== confirmPassword) {
+          throw new Error("Passwords do not match.");
+        }
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email,
             password,
+            confirmPassword,
             name: name.trim() || undefined,
           }),
         });
@@ -107,6 +118,29 @@ function LoginForm() {
               mode === "signup" ? "new-password" : "current-password"
             }
           />
+          {mode === "signup" && (
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm password"
+              className="w-full rounded-xl border border-white/10 bg-black/25 px-4 py-3 outline-none placeholder:text-[var(--text-muted)]"
+              required
+              minLength={6}
+              autoComplete="new-password"
+            />
+          )}
+          {mode === "signin" && (
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-[var(--accent)]"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          )}
+          {info && <p className="text-sm text-[var(--success)]">{info}</p>}
           {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
           <button
             type="submit"
@@ -127,6 +161,8 @@ function LoginForm() {
           type="button"
           onClick={() => {
             setError(null);
+            setInfo(null);
+            setConfirmPassword("");
             setMode((m) => (m === "signin" ? "signup" : "signin"));
           }}
           className="w-full py-2 text-sm text-[var(--text-muted)]"

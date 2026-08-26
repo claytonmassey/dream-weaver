@@ -29,7 +29,10 @@ const mobileNav = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAuth = pathname?.startsWith("/login");
+  const isAuth =
+    pathname?.startsWith("/login") ||
+    pathname?.startsWith("/forgot-password") ||
+    pathname?.startsWith("/reset-password");
 
   if (isAuth) {
     return <div className="dream-bg min-h-dvh">{children}</div>;
@@ -128,7 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <Link
                       href={item.href}
                       className={cn(
-                        "flex min-h-12 flex-col items-center justify-center gap-0.5 text-[10px]",
+                        "flex min-h-12 flex-col items-center justify-center gap-0.5 text-xs",
                         active
                           ? "text-[var(--accent)]"
                           : "text-[var(--text-muted)]",

@@ -6,11 +6,17 @@ import { z } from "zod";
 
 export const runtime = "nodejs";
 
-const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6).max(100),
-  name: z.string().min(1).max(80).optional(),
-});
+const registerSchema = z
+  .object({
+    email: z.string().email(),
+    password: z.string().min(6).max(100),
+    confirmPassword: z.string().min(6).max(100),
+    name: z.string().min(1).max(80).optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+  });
 
 export async function POST(request: Request) {
   try {
@@ -47,10 +53,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const mismatch = error.issues.some((i) =>
+        i.path.includes("confirmPassword"),
+      );
       return NextResponse.json(
         {
-          error:
-            "Enter a valid email and a password of at least 6 characters.",
+          error: mismatch
+            ? "Passwords do not match."
+            : "Enter a valid email and a password of at least 6 characters.",
         },
         { status: 400 },
       );

@@ -75,7 +75,7 @@ export default async function CalendarDayPage({ params }: Props) {
                       unoptimized
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                    <div className="flex h-full items-center justify-center text-xs uppercase tracking-wider text-[var(--text-muted)]">
                       {dream.imageStatus === "pending" ? "Painting…" : "No image"}
                     </div>
                   )}

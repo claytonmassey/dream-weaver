@@ -140,6 +140,20 @@ export const localDb = {
     return user;
   },
 
+  async updateUserPassword(
+    email: string,
+    passwordHash: string,
+  ): Promise<UserAccount | null> {
+    const store = await ensureStore();
+    const user = store.users.find(
+      (u) => u.email === email.toLowerCase().trim(),
+    );
+    if (!user) return null;
+    user.passwordHash = passwordHash;
+    await writeStore(store);
+    return user;
+  },
+
   async listDreams(userId: string): Promise<DreamListItem[]> {
     const store = await ensureStore();
     return store.dreams

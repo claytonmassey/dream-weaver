@@ -181,7 +181,7 @@ export function HomeDashboard({
                             unoptimized
                           />
                         ) : (
-                          <span className="flex h-full items-center justify-center text-[10px] text-[var(--text-muted)]">
+                          <span className="flex h-full items-center justify-center text-xs text-[var(--text-muted)]">
                             —
                           </span>
                         )}

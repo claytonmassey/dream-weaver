@@ -28,4 +28,8 @@ export const userStore = {
   getOrCreateDemoUser(): Promise<UserAccount> {
     return db().getOrCreateDemoUser();
   },
+
+  updatePassword(email: string, passwordHash: string) {
+    return db().updateUserPassword(email, passwordHash);
+  },
 };

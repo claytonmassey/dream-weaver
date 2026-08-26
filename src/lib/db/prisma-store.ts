@@ -148,6 +148,22 @@ export const prismaDb = {
     return toUserAccount(user);
   },
 
+  async updateUserPassword(
+    email: string,
+    passwordHash: string,
+  ): Promise<UserAccount | null> {
+    const normalized = email.toLowerCase().trim();
+    try {
+      const user = await prisma.user.update({
+        where: { email: normalized },
+        data: { passwordHash },
+      });
+      return toUserAccount(user);
+    } catch {
+      return null;
+    }
+  },
+
   async getOrCreateDemoUser(): Promise<UserAccount> {
     const existing = await prisma.user.findUnique({
       where: { email: "demo@dreamline.app" },

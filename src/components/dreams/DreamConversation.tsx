@@ -277,7 +277,7 @@ export function DreamConversation({
               className="h-14 w-14 rounded-xl object-cover ring-1 ring-[var(--accent)]/30"
             />
             {ref.personName && (
-              <span className="absolute inset-x-0 bottom-0 truncate rounded-b-xl bg-black/65 px-1 py-0.5 text-center text-[10px] text-white">
+              <span className="absolute inset-x-0 bottom-0 truncate rounded-b-xl bg-black/65 px-1 py-0.5 text-center text-xs text-white">
                 {ref.personName}
               </span>
             )}
@@ -312,7 +312,7 @@ export function DreamConversation({
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-2 [-webkit-overflow-scrolling:touch]">
           <div className="flex items-end gap-2.5">
             <BrandAvatar />
-            <div className="max-w-[85%] rounded-2xl glass px-4 py-3 text-[15px] leading-relaxed text-[var(--text)]">
+            <div className="max-w-[85%] rounded-2xl glass px-4 py-3 text-base leading-relaxed text-[var(--text)]">
               Thanks, I&apos;ve captured your dream. Pick a style, then I&apos;ll
               paint it ✨
             </div>
@@ -327,11 +327,11 @@ export function DreamConversation({
                 value={enriched}
                 onChange={(e) => setEnriched(e.target.value)}
                 rows={8}
-                className="w-full resize-none bg-transparent text-[15px] leading-relaxed outline-none"
+                className="w-full resize-none bg-transparent text-base leading-relaxed outline-none"
                 aria-label="Edit dream transcript"
               />
             ) : (
-              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-[var(--text)]">
+              <p className="whitespace-pre-wrap text-base leading-relaxed text-[var(--text)]">
                 {enriched}
               </p>
             )}
@@ -421,14 +421,14 @@ export function DreamConversation({
           message.role === "assistant" ? (
             <div key={`a-${index}`} className="flex items-end gap-2.5">
               <BrandAvatar />
-              <div className="max-w-[82%] rounded-2xl rounded-bl-md glass px-4 py-3 text-[15px] leading-relaxed text-[var(--text)]">
+              <div className="max-w-[82%] rounded-2xl rounded-bl-md glass px-4 py-3 text-base leading-relaxed text-[var(--text)]">
                 {message.content}
               </div>
             </div>
           ) : (
             <div
               key={`u-${index}`}
-              className="ml-auto max-w-[82%] rounded-2xl rounded-br-md px-4 py-3 text-[15px] leading-relaxed"
+              className="ml-auto max-w-[82%] rounded-2xl rounded-br-md px-4 py-3 text-base leading-relaxed"
               style={{ background: "var(--bubble-user)" }}
             >
               {message.content}
@@ -522,7 +522,7 @@ export function DreamConversation({
             }}
             placeholder="Share more details…"
             disabled={busy || recording}
-            className="min-w-0 flex-1 bg-transparent py-2 text-[15px] outline-none placeholder:text-[var(--text-muted)] disabled:opacity-60"
+            className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none placeholder:text-[var(--text-muted)] disabled:opacity-60"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();

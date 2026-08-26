@@ -83,7 +83,7 @@ export function DreamCalendar({ dreams }: { dreams: DreamListItem[] }) {
           </div>
         </div>
 
-        <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] tracking-wider text-[var(--text-muted)]">
+        <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs tracking-wider text-[var(--text-muted)]">
           {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
             <div key={`${d}-${i}`} className="py-1">
               {d}
