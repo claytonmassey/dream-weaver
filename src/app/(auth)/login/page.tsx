@@ -1,12 +1,14 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import Link from "next/link";
 import { useState } from "react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("demo@dreamline.app");
-  const [password, setPassword] = useState("dreamline");
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -14,72 +16,118 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-      callbackUrl: "/",
-    });
-    setLoading(false);
-    if (result?.error) {
-      setError("Invalid email or password.");
-      return;
+
+    try {
+      if (mode === "signup") {
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            name: name.trim() || undefined,
+          }),
+        });
+        const data = (await res.json()) as { error?: string };
+        if (!res.ok) {
+          throw new Error(data.error || "Couldn't create account.");
+        }
+      }
+
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl: "/",
+      });
+      if (result?.error) {
+        throw new Error(
+          mode === "signup"
+            ? "Account created, but sign-in failed. Try signing in."
+            : "Invalid email or password.",
+        );
+      }
+      window.location.href = result?.url ?? "/";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setLoading(false);
     }
-    window.location.href = result?.url ?? "/";
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-5">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="space-y-1 text-center">
-          <Link href="/" className="font-display text-2xl">
-            Dreamline
-          </Link>
-          <p className="text-sm text-[var(--text-muted)]">Sign in</p>
+    <div className="flex min-h-dvh items-center justify-center px-5 py-10">
+      <div className="glass w-full max-w-sm space-y-6 rounded-3xl border border-white/10 p-6 sm:p-8">
+        <div className="space-y-3 text-center">
+          <div className="flex justify-center">
+            <BrandLogo linked={false} height={72} className="mx-auto" />
+          </div>
+          <p className="text-sm text-[var(--text-muted)]">
+            {mode === "signin"
+              ? "Sign in to save your dreams"
+              : "Create your account"}
+          </p>
         </div>
 
         <form onSubmit={(e) => void onSubmit(e)} className="space-y-3">
+          {mode === "signup" && (
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name (optional)"
+              className="w-full rounded-xl border border-white/10 bg-black/25 px-4 py-3 outline-none placeholder:text-[var(--text-muted)]"
+              autoComplete="name"
+            />
+          )}
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="w-full rounded-xl bg-[var(--bg-elevated)] px-4 py-3 outline-none"
+            className="w-full rounded-xl border border-white/10 bg-black/25 px-4 py-3 outline-none placeholder:text-[var(--text-muted)]"
             required
+            autoComplete="email"
           />
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="w-full rounded-xl bg-[var(--bg-elevated)] px-4 py-3 outline-none"
+            className="w-full rounded-xl border border-white/10 bg-black/25 px-4 py-3 outline-none placeholder:text-[var(--text-muted)]"
             required
+            minLength={6}
+            autoComplete={
+              mode === "signup" ? "new-password" : "current-password"
+            }
           />
           {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-[var(--accent)] py-3 text-sm font-medium text-[#1a1612]"
+            className="btn-gold w-full rounded-full py-3 text-sm disabled:opacity-60"
           >
-            {loading ? "Signing in…" : "Continue"}
+            {loading
+              ? mode === "signup"
+                ? "Creating…"
+                : "Signing in…"
+              : mode === "signup"
+                ? "Create account"
+                : "Sign in"}
           </button>
         </form>
 
         <button
           type="button"
-          onClick={() =>
-            void signIn("google", { callbackUrl: "/" }).catch(() =>
-              setError("Google sign-in is not configured."),
-            )
-          }
+          onClick={() => {
+            setError(null);
+            setMode((m) => (m === "signin" ? "signup" : "signin"));
+          }}
           className="w-full py-2 text-sm text-[var(--text-muted)]"
         >
-          Continue with Google
+          {mode === "signin"
+            ? "Need an account? Create one"
+            : "Already have an account? Sign in"}
         </button>
-
-        <p className="text-center text-xs text-[var(--text-muted)]">
-          Demo: demo@dreamline.app / dreamline
-        </p>
       </div>
     </div>
   );

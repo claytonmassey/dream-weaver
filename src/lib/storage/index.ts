@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { createId } from "@/lib/utils/id";
+import { del, put } from "@vercel/blob";
 
 export interface StorageProvider {
   save(input: {
@@ -12,9 +13,12 @@ export interface StorageProvider {
   delete(key: string): Promise<void>;
 }
 
+function safeFilename(filename: string): string {
+  return filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
 /**
- * Local filesystem storage for development.
- * Replace with Vercel Blob (or S3) in production — see docs/STORAGE.md.
+ * Local filesystem storage for development without Blob credentials.
  */
 export class LocalStorageProvider implements StorageProvider {
   private root = path.join(process.cwd(), ".data", "uploads");
@@ -25,14 +29,13 @@ export class LocalStorageProvider implements StorageProvider {
     mimeType: string;
     folder: "audio" | "images" | "references";
   }): Promise<{ url: string; key: string }> {
-    const safeName = `${createId("file")}-${input.filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const safeName = `${createId("file")}-${safeFilename(input.filename)}`;
     const key = path.join(input.folder, safeName);
     const fullPath = path.join(this.root, key);
     await fs.mkdir(path.dirname(fullPath), { recursive: true });
     await fs.writeFile(fullPath, input.data);
-    // Served via authenticated /api/media/[...path] — not a public predictable URL
     return {
-      key,
+      key: key.split(path.sep).join("/"),
       url: `/api/media/${key.split(path.sep).join("/")}`,
     };
   }
@@ -48,10 +51,11 @@ export class LocalStorageProvider implements StorageProvider {
 }
 
 /**
- * Stub for Vercel Blob — plug in when STORAGE_TOKEN / BLOB_READ_WRITE_TOKEN is available.
+ * Private Vercel Blob storage.
+ * Files are not publicly reachable — served via authenticated /api/media.
  */
 export class VercelBlobStorageProvider implements StorageProvider {
-  constructor(private token: string) {}
+  constructor(private token?: string) {}
 
   async save(input: {
     data: Buffer;
@@ -59,22 +63,49 @@ export class VercelBlobStorageProvider implements StorageProvider {
     mimeType: string;
     folder: "audio" | "images" | "references";
   }): Promise<{ url: string; key: string }> {
-    // Placeholder: integrate @vercel/blob put() here using this.token
-    void this.token;
-    const local = new LocalStorageProvider();
-    return local.save(input);
+    const pathname = `${input.folder}/${createId("file")}-${safeFilename(input.filename)}`;
+
+    const blob = await put(pathname, input.data, {
+      access: "private",
+      contentType: input.mimeType,
+      addRandomSuffix: false,
+      ...(this.token ? { token: this.token } : {}),
+    });
+
+    // Keep app URLs stable behind our auth proxy (pathname is the blob key).
+    return {
+      key: blob.pathname,
+      url: `/api/media/${blob.pathname}`,
+    };
   }
 
   async delete(key: string): Promise<void> {
-    const local = new LocalStorageProvider();
-    return local.delete(key);
+    try {
+      await del(key, this.token ? { token: this.token } : undefined);
+    } catch {
+      // ignore missing files
+    }
   }
 }
 
+export function blobToken(): string | undefined {
+  return (
+    process.env.BLOB_READ_WRITE_TOKEN ||
+    process.env.STORAGE_TOKEN ||
+    undefined
+  );
+}
+
+export function useVercelBlob(): boolean {
+  if (process.env.USE_VERCEL_BLOB === "false") return false;
+  if (process.env.USE_VERCEL_BLOB === "true") return true;
+  // Auto-enable when a blob token is present
+  return Boolean(blobToken());
+}
+
 export function getStorageProvider(): StorageProvider {
-  const token = process.env.STORAGE_TOKEN || process.env.BLOB_READ_WRITE_TOKEN;
-  if (token && process.env.USE_VERCEL_BLOB === "true") {
-    return new VercelBlobStorageProvider(token);
+  if (useVercelBlob()) {
+    return new VercelBlobStorageProvider(blobToken());
   }
   return new LocalStorageProvider();
 }

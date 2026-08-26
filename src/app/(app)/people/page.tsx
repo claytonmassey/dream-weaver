@@ -1,13 +1,13 @@
 import Link from "next/link";
+import { requirePageUser } from "@/lib/auth/session";
 import { dreamRepository } from "@/lib/db/dream-repository";
 import { ensureSeeded } from "@/lib/db/ensure-seed";
-import { localDb } from "@/lib/db/local-store";
 import { DeleteReferenceButton } from "@/components/dreams/DeleteReferenceButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function PeoplePage() {
-  const user = await localDb.getOrCreateDemoUser();
+  const user = await requirePageUser();
   await ensureSeeded(user.id);
   const people = await dreamRepository.listPeople(user.id);
   const references = await dreamRepository.listPersonReferences(user.id);

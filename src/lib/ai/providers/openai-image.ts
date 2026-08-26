@@ -1,5 +1,6 @@
-import OpenAI from "openai";
+import OpenAI, { toFile } from "openai";
 import { getStorageProvider } from "@/lib/storage";
+import { readStoredMedia } from "@/lib/storage/read-media";
 import type { DreamImageProvider } from "@/lib/ai/providers/types";
 import type { DreamVisualStyle, GeneratedDreamImage } from "@/types/dream";
 
@@ -14,7 +15,7 @@ const STYLE_HINTS: Record<DreamVisualStyle, string> = {
 
 /**
  * OpenAI image generation (gpt-image-1).
- * Saves the resulting PNG into app storage and returns a private media URL.
+ * With reference photos, uses images.edit so likeness can carry into the dream frame.
  */
 export class OpenAIImageProvider implements DreamImageProvider {
   private client: OpenAI;
@@ -31,22 +32,38 @@ export class OpenAIImageProvider implements DreamImageProvider {
     const style = input.style ?? "cinematic";
     const styleHint = STYLE_HINTS[style];
 
-    // Reference images are reserved for future image-edit / identity flows.
-    void input.referenceImages;
-
     const prompt = [
       input.prompt.trim(),
       `Visual style: ${styleHint}.`,
       "Single coherent dream memory frame.",
       "No text, no watermark, no UI, no logo.",
-    ].join(" ");
+      input.referenceImages && input.referenceImages.length > 0
+        ? "Preserve the likeness of people from the reference photo(s) while placing them naturally in the dream scene."
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
 
-    const result = await this.client.images.generate({
-      model: "gpt-image-1",
-      prompt: prompt.slice(0, 4000),
-      size: "1024x1024",
-      n: 1,
-    });
+    const refFiles = await this.loadReferenceFiles(input.referenceImages ?? []);
+
+    let result;
+    if (refFiles.length > 0) {
+      result = await this.client.images.edit({
+        model: "gpt-image-1",
+        image: refFiles.length === 1 ? refFiles[0]! : refFiles,
+        prompt: prompt.slice(0, 32000),
+        size: "1024x1024",
+        // Supported by gpt-image-1 for face/logo preservation (SDK types may lag).
+        ...( { input_fidelity: "high" } as Record<string, string> ),
+      });
+    } else {
+      result = await this.client.images.generate({
+        model: "gpt-image-1",
+        prompt: prompt.slice(0, 4000),
+        size: "1024x1024",
+        n: 1,
+      });
+    }
 
     const item = result.data?.[0];
     if (!item) {
@@ -81,5 +98,17 @@ export class OpenAIImageProvider implements DreamImageProvider {
       provider: "openai-gpt-image-1",
       style,
     };
+  }
+
+  private async loadReferenceFiles(urls: string[]) {
+    const files = [];
+    for (const url of urls.slice(0, 4)) {
+      const stored = await readStoredMedia(url);
+      if (!stored) continue;
+      files.push(
+        await toFile(stored.data, stored.filename, { type: stored.mimeType }),
+      );
+    }
+    return files;
   }
 }

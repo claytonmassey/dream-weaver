@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import type { Provider } from "next-auth/providers";
 import bcrypt from "bcryptjs";
-import { localDb } from "@/lib/db/local-store";
+import { userStore } from "@/lib/db/user-store";
 
 const providers: Provider[] = [
   Credentials({
@@ -17,8 +17,9 @@ const providers: Provider[] = [
       const password = credentials?.password?.toString() ?? "";
       if (!email || !password) return null;
 
+      // Ensure demo account exists when using demo credentials
       if (email === "demo@dreamline.app" && password === "dreamline") {
-        const user = await localDb.getOrCreateDemoUser();
+        const user = await userStore.getOrCreateDemoUser();
         return {
           id: user.id,
           email: user.email,
@@ -26,7 +27,7 @@ const providers: Provider[] = [
         };
       }
 
-      const user = await localDb.findUserByEmail(email);
+      const user = await userStore.findByEmail(email);
       if (!user?.passwordHash) return null;
       const ok = await bcrypt.compare(password, user.passwordHash);
       if (!ok) return null;
@@ -58,9 +59,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google" && user.email) {
-        const existing = await localDb.findUserByEmail(user.email);
+        const existing = await userStore.findByEmail(user.email);
         if (!existing) {
-          await localDb.createUser({
+          await userStore.create({
             email: user.email,
             name: user.name ?? undefined,
             image: user.image ?? undefined,
@@ -73,8 +74,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         if (user.email) {
           const dbUser =
-            (await localDb.findUserByEmail(user.email)) ??
-            (await localDb.createUser({
+            (await userStore.findByEmail(user.email)) ??
+            (await userStore.create({
               email: user.email,
               name: user.name ?? undefined,
               image: user.image ?? undefined,

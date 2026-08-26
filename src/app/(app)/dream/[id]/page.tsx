@@ -4,9 +4,9 @@ import { DreamEventList } from "@/components/dreams/DreamEventList";
 import { DreamHero } from "@/components/dreams/DreamHero";
 import { RetryImageButton } from "@/components/dreams/RetryImageButton";
 import { DeleteDreamButton } from "@/components/dreams/DeleteDreamButton";
+import { requirePageUser } from "@/lib/auth/session";
 import { dreamRepository } from "@/lib/db/dream-repository";
 import { ensureSeeded } from "@/lib/db/ensure-seed";
-import { localDb } from "@/lib/db/local-store";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ type Props = {
 export default async function DreamDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
   const { imageFailed } = await searchParams;
-  const user = await localDb.getOrCreateDemoUser();
+  const user = await requirePageUser();
   await ensureSeeded(user.id);
   const dream = await dreamRepository.get(user.id, id);
   if (!dream) notFound();

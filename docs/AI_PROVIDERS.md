@@ -93,7 +93,9 @@ Orchestration lives in `src/server/dreams/service.ts` — keep React components 
 
 ## Reference images
 
-When a person is marked `isRealPerson: true`, the UI prompts for an optional photo. Uploaded URLs are passed as `referenceImages` into `DreamImageProvider.generateDreamImage`. If your image API supports identity / IP-adapter / reference images, map them there. If not, ignore the array until the vendor supports it.
+During chat, tap **Add photo**. Vision identifies whether the upload is someone from the dream (e.g. dad) and links it.
+
+Photos are stored under `.data/uploads/references/` and passed into `gpt-image-1` via `images.edit` with high input fidelity so likeness can carry into the painted scene.
 
 ## Image generation
 

@@ -71,12 +71,13 @@ export async function serviceGenerateDreamImage(
     throw new Error("Dream not found");
   }
 
-  const refs =
-    referenceImageUrls && referenceImageUrls.length > 0
-      ? referenceImageUrls
-      : dream.people
-          .map((p) => p.referenceImageUrl)
-          .filter((url): url is string => Boolean(url));
+  const personRefs = dream.people
+    .map((p) => p.referenceImageUrl)
+    .filter((url): url is string => Boolean(url));
+
+  const refs = Array.from(
+    new Set([...(referenceImageUrls ?? []), ...personRefs]),
+  );
 
   try {
     const resolvedStyle = style ?? dream.visualStyle;

@@ -1,11 +1,20 @@
-import { localDb } from "@/lib/db/local-store";
+import { dreamRepository } from "@/lib/db/dream-repository";
 import { buildSeedDreams } from "@/lib/db/seed-data";
+import { usePrisma } from "@/lib/db/prisma";
 
 /**
- * Seeds demo dreams once per local store so the timeline looks complete.
+ * Optionally seeds sample dreams for empty demo accounts.
+ * Skipped when using Postgres with DEMO_MODE=false (real accounts start empty).
  */
 export async function ensureSeeded(userId: string): Promise<void> {
-  const dreams = await localDb.listDreams(userId);
+  if (usePrisma() && process.env.DEMO_MODE === "false") {
+    return;
+  }
+  if (process.env.SEED_DEMO_DREAMS === "false") {
+    return;
+  }
+
+  const dreams = await dreamRepository.list(userId);
   if (dreams.length > 0) return;
-  await localDb.replaceAllDreams(userId, buildSeedDreams(userId));
+  await dreamRepository.replaceAllDreams(userId, buildSeedDreams(userId));
 }

@@ -38,7 +38,7 @@ export const DREAM_ANALYSIS_JSON_SCHEMA = `{
   "imagePrompt": "string"
 }`;
 
-export const DREAM_ANALYSIS_SYSTEM_PROMPT = `You are analyzing a user's description of a dream for a visual dream journal called Dreamline.
+export const DREAM_ANALYSIS_SYSTEM_PROMPT = `You are analyzing a user's description of a dream for a visual dream journal called dreamweava.
 
 Extract the important visual and narrative elements needed to remember and illustrate the dream.
 
@@ -84,7 +84,7 @@ Goals:
 - Do not diagnose.
 - Do not invent details the dreamer did not confirm.
 
-If they have not shared anything yet, greet them warmly as Dreamline and ask what they remember first.
+If they have not shared anything yet, greet them warmly as dreamweava and ask what they remember first.
 
 Return JSON only:
 {

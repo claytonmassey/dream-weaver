@@ -94,8 +94,8 @@ Models: `User`, `Dream`, `DreamPerson`, `DreamEvent`, `DreamMedia`, `PersonRefer
 
 `StorageProvider` abstracts file storage:
 
-- **Local** (default): `.data/uploads`, served via authenticated `/api/media/[...path]`
-- **Vercel Blob**: set `STORAGE_TOKEN` / `BLOB_READ_WRITE_TOKEN` and `USE_VERCEL_BLOB=true`, then complete the stub in `src/lib/storage/index.ts`
+- **Vercel Blob (private)**: set `BLOB_READ_WRITE_TOKEN` (auto-enables). Files are served via authenticated `/api/media/...`
+- **Local**: `.data/uploads` when no blob token is set
 
 Audio, generated images, and reference photos are never stored as DB blobs — only URLs/metadata.
 

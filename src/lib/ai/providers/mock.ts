@@ -228,7 +228,7 @@ export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
       return {
         message: input.transcript.trim()
           ? "Beautiful. What was happening there?"
-          : "Hi, I'm Dreamline ✨ Let's capture your dream. What's the first thing you remember?",
+          : "Hi, I'm dreamweava ✨ Let's capture your dream. What's the first thing you remember?",
         readyForDesign: false,
         enrichedTranscript: input.transcript,
       };

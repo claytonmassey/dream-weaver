@@ -21,7 +21,7 @@ export default function SettingsPage() {
         <p className="text-sm text-[var(--text-muted)]">
           {session?.user?.email
             ? `Signed in as ${session.user.email}`
-            : "Using demo mode (demo@dreamline.app). Sign in to bind dreams to your account."}
+            : "Not signed in."}
         </p>
         <div className="flex flex-wrap gap-3">
           {!session?.user && (
@@ -45,10 +45,11 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {process.env.NEXT_PUBLIC_DEMO_TOOLS === "true" && (
       <section className="space-y-3 rounded-xl bg-[var(--bg-elevated)] p-5">
         <h2 className="text-sm text-[var(--text-muted)]">Demo data</h2>
         <p className="text-sm text-[var(--text-muted)]">
-          Reset the local store with sample dreams.
+          Reset with sample dreams.
         </p>
         <button
           type="button"
@@ -65,6 +66,7 @@ export default function SettingsPage() {
           {loading ? "Seeding…" : "Reseed demo dreams"}
         </button>
       </section>
+      )}
 
       <section className="space-y-3 rounded-xl bg-[var(--bg-elevated)] p-5">
         <h2 className="text-sm text-[var(--danger)]">Danger zone</h2>

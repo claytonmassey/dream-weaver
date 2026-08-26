@@ -17,13 +17,13 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Dreamline — Dream Journal",
+  title: "dreamweava — Dream Journal",
   description:
     "Remember, visualize, and revisit your dreams in a cinematic personal journal.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0c0d10",
+  themeColor: "#0a0614",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
