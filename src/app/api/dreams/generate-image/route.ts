@@ -12,7 +12,18 @@ export const maxDuration = 120;
 
 function envDiagnostics() {
   return {
-    hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+    hasDatabaseUrl: Boolean(
+      process.env.DATABASE_URL ||
+        process.env.POSTGRES_PRISMA_URL ||
+        process.env.POSTGRES_URL ||
+        process.env.DATABASE_URL_UNPOOLED,
+    ),
+    databaseUrlKeys: [
+      process.env.DATABASE_URL ? "DATABASE_URL" : null,
+      process.env.POSTGRES_PRISMA_URL ? "POSTGRES_PRISMA_URL" : null,
+      process.env.POSTGRES_URL ? "POSTGRES_URL" : null,
+      process.env.DATABASE_URL_UNPOOLED ? "DATABASE_URL_UNPOOLED" : null,
+    ].filter(Boolean),
     hasBlobToken: Boolean(
       process.env.BLOB_READ_WRITE_TOKEN || process.env.STORAGE_TOKEN,
     ),
@@ -49,6 +60,17 @@ export async function POST(request: Request) {
   const diagnostics = envDiagnostics();
 
   try {
+    if (process.env.VERCEL === "1" && !diagnostics.hasDatabaseUrl) {
+      return NextResponse.json(
+        {
+          error:
+            "No Postgres URL on Vercel. Set DATABASE_URL (Neon pooled URL) under Project Settings → Environment Variables for Production, then Redeploy. Without it, dreams are saved in memory and disappear.",
+          diagnostics,
+        },
+        { status: 500 },
+      );
+    }
+
     if (process.env.DEMO_STORE === "true") {
       return NextResponse.json(
         {

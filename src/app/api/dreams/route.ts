@@ -28,6 +28,23 @@ export async function POST(request: Request) {
     );
   }
 
+  if (
+    process.env.VERCEL === "1" &&
+    !(
+      process.env.DATABASE_URL ||
+      process.env.POSTGRES_PRISMA_URL ||
+      process.env.POSTGRES_URL
+    )
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "DATABASE_URL is missing on Vercel. Add your Neon pooled connection string, then redeploy.",
+      },
+      { status: 500 },
+    );
+  }
+
   try {
     const body = await request.json();
     const parsed = createDreamRequestSchema.parse(body);
