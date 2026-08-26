@@ -249,11 +249,15 @@ export function DreamComposer() {
           referencePhotos: [],
         }),
       });
-      const createPayload = (await createRes.json()) as {
+      const createPayload = (await createRes.json().catch(() => ({}))) as {
         dream?: Dream;
+        error?: string;
       };
       if (!createRes.ok || !createPayload.dream) {
-        throw new Error("Save failed");
+        throw new Error(
+          createPayload.error ||
+            `Couldn't save your dream (HTTP ${createRes.status}).`,
+        );
       }
       const dream = createPayload.dream;
       setSavedDreamId(dream.id);
@@ -343,11 +347,13 @@ export function DreamComposer() {
 
       // Image paints in the background; the dream page polls until ready.
       router.push(`/dream/${dream.id}`);
-    } catch {
+    } catch (err) {
       setError(
-        savedDreamId
-          ? "Painting failed, but your dream was saved."
-          : "Couldn't save your dream.",
+        err instanceof Error
+          ? err.message
+          : savedDreamId
+            ? "Painting failed, but your dream was saved."
+            : "Couldn't save your dream.",
       );
       setStep("error");
     }
