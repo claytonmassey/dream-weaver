@@ -10,21 +10,54 @@ import { PasswordInput } from "@/components/auth/PasswordInput";
 function LoginForm() {
   const searchParams = useSearchParams();
   const configError = searchParams.get("error") === "config";
+  const authError = searchParams.get("error");
   const resetOk = searchParams.get("reset") === "1";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(
-    configError
-      ? "Server storage isn’t configured. Set DATABASE_URL and AUTH_SECRET in Vercel."
-      : null,
-  );
+  const [error, setError] = useState<string | null>(() => {
+    if (configError) {
+      return "Server storage isn’t configured. Set DATABASE_URL and AUTH_SECRET in Vercel.";
+    }
+    if (authError && authError !== "config") {
+      return "Sign-in failed. Check your email and password, then try again.";
+    }
+    return null;
+  });
   const [info, setInfo] = useState<string | null>(
     resetOk ? "Password updated. Sign in with your new password." : null,
   );
   const [loading, setLoading] = useState(false);
+
+  async function finishSignIn(normalizedEmail: string) {
+    const result = await signIn("credentials", {
+      email: normalizedEmail,
+      password,
+      redirect: false,
+      callbackUrl: "/",
+    });
+
+    if (result?.error || !result?.ok) {
+      throw new Error(
+        mode === "signup"
+          ? "Account created, but sign-in failed. Try signing in."
+          : "Invalid email or password.",
+      );
+    }
+
+    const nextUrl = result.url ?? "/";
+    if (nextUrl.includes("/api/auth/error") || nextUrl.includes("error=")) {
+      throw new Error(
+        mode === "signup"
+          ? "Account created, but sign-in failed. Try signing in."
+          : "Sign-in failed. Please try again.",
+      );
+    }
+
+    window.location.assign(nextUrl.startsWith("http") ? nextUrl : "/");
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,32 +86,11 @@ function LoginForm() {
         if (!res.ok) {
           throw new Error(data.error || "Couldn't create account.");
         }
-
-        const result = await signIn("credentials", {
-          email: normalizedEmail,
-          password,
-          redirect: false,
-          callbackUrl: "/",
-        });
-        if (result?.error || !result?.ok) {
-          throw new Error(
-            "Account created, but sign-in failed. Try signing in.",
-          );
-        }
-        window.location.assign(result.url ?? "/");
+        await finishSignIn(normalizedEmail);
         return;
       }
 
-      const result = await signIn("credentials", {
-        email: normalizedEmail,
-        password,
-        redirect: false,
-        callbackUrl: "/",
-      });
-      if (result?.error || !result?.ok) {
-        throw new Error("Invalid email or password.");
-      }
-      window.location.assign(result.url ?? "/");
+      await finishSignIn(normalizedEmail);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setLoading(false);

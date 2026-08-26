@@ -13,9 +13,8 @@ export const prisma =
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+// Always cache in serverless/dev so we don't open a new pool every import.
+globalForPrisma.prisma = prisma;
 
 export function usePrisma(): boolean {
   if (process.env.DEMO_STORE === "true") return false;
