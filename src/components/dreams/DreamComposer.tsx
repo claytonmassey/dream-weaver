@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Lock, Mic, Pencil } from "lucide-react";
-import { SaveAccountGate } from "@/components/auth/SaveAccountGate";
 import { DreamConversation } from "@/components/dreams/DreamConversation";
 import { DreamProcessing } from "@/components/dreams/DreamProcessing";
 import { PersonReferencePrompt } from "@/components/dreams/PersonReferencePrompt";
@@ -22,14 +21,6 @@ type Step =
   | "saving"
   | "generating"
   | "error";
-
-type PendingSave = {
-  finalTranscript: string;
-  dreamAnalysis: DreamAnalysis;
-  photos: PhotosByName;
-  references: DreamChatReference[];
-  style: DreamVisualStyle;
-};
 
 function namesMatch(a: string, b: string): boolean {
   const normalize = (s: string) =>
@@ -64,8 +55,6 @@ export function DreamComposer() {
   const [pendingPeople, setPendingPeople] = useState<DreamPerson[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [savedDreamId, setSavedDreamId] = useState<string | null>(null);
-  const [showSaveGate, setShowSaveGate] = useState(false);
-  const [pendingSave, setPendingSave] = useState<PendingSave | null>(null);
   const speakLaunchTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -243,49 +232,7 @@ export function DreamComposer() {
     references: DreamChatReference[] = chatReferences,
     style: DreamVisualStyle = visualStyle,
   ) {
-    const pending: PendingSave = {
-      finalTranscript,
-      dreamAnalysis,
-      photos,
-      references,
-      style,
-    };
-    setPendingSave(pending);
     setPhotosByName(photos);
-    setError(null);
-
-    try {
-      const meRes = await fetch("/api/auth/me");
-      const me = (await meRes.json()) as {
-        authenticated?: boolean;
-        isGuest?: boolean;
-      };
-      if (!me.authenticated || me.isGuest) {
-        setShowSaveGate(true);
-        setStep((s) =>
-          s === "analyzing" || s === "saving" ? "converse" : s,
-        );
-        return;
-      }
-    } catch {
-      setShowSaveGate(true);
-      setStep((s) =>
-        s === "analyzing" || s === "saving" ? "converse" : s,
-      );
-      return;
-    }
-
-    await persistAndGenerate(pending);
-  }
-
-  async function persistAndGenerate(pending: PendingSave) {
-    const {
-      finalTranscript,
-      dreamAnalysis,
-      photos,
-      references,
-      style,
-    } = pending;
     setStep("saving");
     setError(null);
     try {
@@ -304,21 +251,13 @@ export function DreamComposer() {
       });
       const createPayload = (await createRes.json()) as {
         dream?: Dream;
-        code?: string;
-        error?: string;
+        isGuest?: boolean;
       };
-      if (!createRes.ok) {
-        if (createPayload.code === "AUTH_REQUIRED_TO_SAVE") {
-          setShowSaveGate(true);
-          setStep((s) =>
-            s === "saving" || s === "analyzing" ? "converse" : s,
-          );
-          return;
-        }
+      if (!createRes.ok || !createPayload.dream) {
         throw new Error("Save failed");
       }
       const dream = createPayload.dream;
-      if (!dream) throw new Error("Save failed");
+      const createdAsGuest = Boolean(createPayload.isGuest);
       setSavedDreamId(dream.id);
 
       const attachedFiles = new Set<File>();
@@ -338,7 +277,6 @@ export function DreamComposer() {
         attachedFiles.add(file);
       }
 
-      // Chat refs identified as people but not yet attached
       for (const ref of references) {
         if (!ref.isPerson || !ref.personName || attachedFiles.has(ref.file)) {
           continue;
@@ -357,7 +295,6 @@ export function DreamComposer() {
         attachedFiles.add(ref.file);
       }
 
-      // Remaining refs (scene / unmatched) still feed generation
       const extraUrls: string[] = [];
       for (const ref of references) {
         if (attachedFiles.has(ref.file)) continue;
@@ -383,12 +320,15 @@ export function DreamComposer() {
         }),
       });
 
+      const claimQuery = createdAsGuest ? "&claim=1" : "";
       if (!imageRes.ok) {
-        router.push(`/dream/${dream.id}?imageFailed=1`);
+        router.push(`/dream/${dream.id}?imageFailed=1${claimQuery}`);
         return;
       }
 
-      router.push(`/dream/${dream.id}`);
+      router.push(
+        createdAsGuest ? `/dream/${dream.id}?claim=1` : `/dream/${dream.id}`,
+      );
     } catch {
       setError(
         savedDreamId
@@ -399,31 +339,15 @@ export function DreamComposer() {
     }
   }
 
-  function withGate(node: React.ReactNode) {
-    return (
-      <>
-        {node}
-        <SaveAccountGate
-          open={showSaveGate}
-          onClose={() => setShowSaveGate(false)}
-          onAuthenticated={() => {
-            setShowSaveGate(false);
-            if (pendingSave) void persistAndGenerate(pendingSave);
-          }}
-        />
-      </>
-    );
-  }
-
   if (step === "listen") {
-    return withGate(
+    return (
       <SpeakFocus
         onReady={(blob) => void handleSpeakReady(blob)}
         onCancel={() => {
           setLandingFading(false);
           setStep("choose");
         }}
-      />,
+      />
     );
   }
 
@@ -439,11 +363,11 @@ export function DreamComposer() {
       saving: "Preparing the canvas...",
       generating: "Creating your dream image...",
     };
-    return withGate(<DreamProcessing label={labels[step]} />);
+    return <DreamProcessing label={labels[step]} />;
   }
 
   if (step === "person-reference" && analysis) {
-    return withGate(
+    return (
       <PersonReferencePrompt
         people={pendingPeople}
         onContinue={(photosById) => {
@@ -469,12 +393,12 @@ export function DreamComposer() {
             visualStyle,
           )
         }
-      />,
+      />
     );
   }
 
   if (step === "converse") {
-    return withGate(
+    return (
       <DreamConversation
         transcript={transcript}
         preferText={preferText}
@@ -484,12 +408,12 @@ export function DreamComposer() {
         }
         onBack={startOver}
         onStartOver={startOver}
-      />,
+      />
     );
   }
 
   if (step === "error") {
-    return withGate(
+    return (
       <div className="space-y-4">
         <p className="text-sm text-[var(--text-muted)]">{error}</p>
         <div className="flex gap-3">
@@ -510,11 +434,11 @@ export function DreamComposer() {
             Start over
           </button>
         </div>
-      </div>,
+      </div>
     );
   }
 
-  return withGate(
+  return (
     <div className="flex h-[calc(100dvh-11.75rem)] min-h-0 flex-col items-center justify-between gap-3 overflow-hidden py-1 text-center sm:justify-center sm:gap-6 sm:py-4 lg:h-[calc(100dvh-4rem)]">
       <div
         className={`shrink-0 space-y-2 transition-all duration-[400ms] ease-out ${
@@ -629,6 +553,6 @@ export function DreamComposer() {
       </div>
 
       {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
-    </div>,
+    </div>
   );
 }

@@ -1,20 +1,23 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 
 type Mode = "signup" | "signin";
 
-export function SaveAccountGate({
+/**
+ * Shown after a guest creates a dream image — invite them to keep it permanently.
+ */
+export function KeepDreamPrompt({
   open,
-  onClose,
-  onAuthenticated,
+  onDismiss,
 }: {
   open: boolean;
-  onClose: () => void;
-  onAuthenticated: () => void;
+  onDismiss: () => void;
 }) {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>("signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,7 +32,7 @@ export function SaveAccountGate({
     try {
       await fetch("/api/auth/claim-guest", { method: "POST" });
     } catch {
-      // Non-fatal — dream save will still use the new account.
+      // Non-fatal
     }
   }
 
@@ -74,7 +77,8 @@ export function SaveAccountGate({
       }
 
       await claimGuest();
-      onAuthenticated();
+      onDismiss();
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setLoading(false);
@@ -87,13 +91,14 @@ export function SaveAccountGate({
         type="button"
         className="absolute inset-0 cursor-default"
         aria-label="Close"
-        onClick={onClose}
+        onClick={onDismiss}
       />
       <div className="glass relative z-10 w-full max-w-sm space-y-5 rounded-3xl border border-white/10 p-6 shadow-2xl">
         <div className="space-y-2 text-center">
-          <h2 className="font-display text-2xl">Save your dream</h2>
+          <h2 className="font-display text-2xl">Keep this dream?</h2>
           <p className="text-sm text-[var(--text-muted)]">
-            Create a free account to keep this dream private to you.
+            Create a free account to save it permanently. You can stay logged
+            out, but this dream may be lost.
           </p>
         </div>
 
@@ -123,7 +128,9 @@ export function SaveAccountGate({
             placeholder="Password"
             required
             minLength={6}
-            autoComplete={mode === "signup" ? "new-password" : "current-password"}
+            autoComplete={
+              mode === "signup" ? "new-password" : "current-password"
+            }
           />
           {mode === "signup" && (
             <PasswordInput
@@ -146,8 +153,8 @@ export function SaveAccountGate({
                 ? "Creating…"
                 : "Signing in…"
               : mode === "signup"
-                ? "Create account & save"
-                : "Sign in & save"}
+                ? "Create account & keep it"
+                : "Sign in & keep it"}
           </button>
         </form>
 
@@ -167,10 +174,10 @@ export function SaveAccountGate({
 
         <button
           type="button"
-          onClick={onClose}
+          onClick={onDismiss}
           className="w-full text-sm text-[var(--text-muted)]"
         >
-          Not now
+          Continue without saving — I may lose this dream
         </button>
       </div>
     </div>

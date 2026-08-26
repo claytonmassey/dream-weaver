@@ -9,9 +9,7 @@ export default async function HomePage() {
   const user = await requirePageUser();
   try {
     await ensureSeeded(user.id);
-    const dreams = user.isGuest
-      ? []
-      : await dreamRepository.list(user.id);
+    const dreams = await dreamRepository.list(user.id);
     return (
       <HomeDashboard
         userName={user.name}

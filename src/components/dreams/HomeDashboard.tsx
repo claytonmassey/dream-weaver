@@ -61,7 +61,8 @@ export function HomeDashboard({
         </div>
         {isGuest && (
           <p className="text-sm text-[var(--text-muted)]">
-            Capture freely — create an account when you want to save a dream.
+            Capture freely — after your image is ready, you can create an
+            account to keep it.
           </p>
         )}
       </header>
