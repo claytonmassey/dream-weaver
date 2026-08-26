@@ -5,8 +5,8 @@ import { getToken } from "next-auth/jwt";
 const publicPaths = ["/login", "/api/auth"];
 
 export async function middleware(req: NextRequest) {
-  // Demo mode skips forced login
-  if (process.env.DEMO_MODE !== "false") {
+  // Opt-in demo mode skips forced login for local prototyping only.
+  if (process.env.DEMO_MODE === "true") {
     return NextResponse.next();
   }
 
@@ -35,6 +35,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|placeholders|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|placeholders|brand|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

@@ -17,8 +17,12 @@ const providers: Provider[] = [
       const password = credentials?.password?.toString() ?? "";
       if (!email || !password) return null;
 
-      // Ensure demo account exists when using demo credentials
-      if (email === "demo@dreamline.app" && password === "dreamline") {
+      // Demo credentials only when DEMO_MODE=true
+      if (
+        process.env.DEMO_MODE === "true" &&
+        email === "demo@dreamline.app" &&
+        password === "dreamline"
+      ) {
         const user = await userStore.getOrCreateDemoUser();
         return {
           id: user.id,

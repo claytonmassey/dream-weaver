@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 
 export function isDemoMode(): boolean {
-  return process.env.DEMO_MODE !== "false";
+  // Opt-in only — production and Vercel require a real login by default.
+  return process.env.DEMO_MODE === "true";
 }
 
 export async function requireUserId(): Promise<

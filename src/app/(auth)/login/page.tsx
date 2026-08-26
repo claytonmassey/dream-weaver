@@ -70,8 +70,8 @@ function LoginForm() {
           </div>
           <p className="text-sm text-[var(--text-muted)]">
             {mode === "signin"
-              ? "Sign in to save your dreams"
-              : "Create your account"}
+              ? "Sign in — your dreams stay private to you"
+              : "Create an account to keep your dreams private"}
           </p>
         </div>
 

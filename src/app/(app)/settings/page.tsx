@@ -13,17 +13,27 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-lg space-y-8 sm:max-w-2xl">
       <div>
-        <h1 className="font-display text-3xl">Settings</h1>
+        <h1 className="font-display text-3xl">Profile</h1>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          Your dreams are private to this account.
+        </p>
       </div>
 
       <section className="space-y-3 rounded-xl bg-[var(--bg-elevated)] p-5">
         <h2 className="text-sm text-[var(--text-muted)]">Account</h2>
-        <p className="text-sm text-[var(--text-muted)]">
-          {session?.user?.email
-            ? `Signed in as ${session.user.email}`
-            : "Not signed in."}
-        </p>
-        <div className="flex flex-wrap gap-3">
+        {session?.user ? (
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-[var(--text)]">
+              {session.user.name || "Dreamer"}
+            </p>
+            <p className="text-sm text-[var(--text-muted)]">
+              {session.user.email}
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-[var(--text-muted)]">Not signed in.</p>
+        )}
+        <div className="flex flex-wrap gap-3 pt-1">
           {!session?.user && (
             <button
               type="button"
