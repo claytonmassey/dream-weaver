@@ -42,12 +42,17 @@ export async function requirePageUser(): Promise<{
   }
 
   if (isDemoMode()) {
-    const demo = await userStore.getOrCreateDemoUser();
-    return {
-      id: demo.id,
-      email: demo.email,
-      name: demo.name,
-    };
+    try {
+      const demo = await userStore.getOrCreateDemoUser();
+      return {
+        id: demo.id,
+        email: demo.email,
+        name: demo.name,
+      };
+    } catch (error) {
+      console.error("[auth] demo user bootstrap failed", error);
+      redirect("/login?error=config");
+    }
   }
 
   redirect("/login");

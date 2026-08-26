@@ -25,21 +25,51 @@ type StoreShape = {
 const DATA_DIR = path.join(process.cwd(), ".data");
 const STORE_PATH = path.join(DATA_DIR, "store.json");
 
+/** Serverless (Vercel) can't persist to the project filesystem. */
+const useMemoryStore =
+  process.env.VERCEL === "1" || process.env.USE_MEMORY_STORE === "true";
+
+let memoryStore: StoreShape | null = null;
+
+function emptyStore(): StoreShape {
+  return { users: [], dreams: [], personReferences: [] };
+}
+
 async function ensureStore(): Promise<StoreShape> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
+  if (useMemoryStore) {
+    if (!memoryStore) memoryStore = emptyStore();
+    return memoryStore;
+  }
+
   try {
-    const raw = await fs.readFile(STORE_PATH, "utf8");
-    return JSON.parse(raw) as StoreShape;
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    try {
+      const raw = await fs.readFile(STORE_PATH, "utf8");
+      return JSON.parse(raw) as StoreShape;
+    } catch {
+      const empty = emptyStore();
+      await fs.writeFile(STORE_PATH, JSON.stringify(empty, null, 2));
+      return empty;
+    }
   } catch {
-    const empty: StoreShape = { users: [], dreams: [], personReferences: [] };
-    await fs.writeFile(STORE_PATH, JSON.stringify(empty, null, 2));
-    return empty;
+    // Read-only filesystem or other IO failure — keep serving from memory.
+    if (!memoryStore) memoryStore = emptyStore();
+    return memoryStore;
   }
 }
 
 async function writeStore(store: StoreShape): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2));
+  if (useMemoryStore) {
+    memoryStore = store;
+    return;
+  }
+
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2));
+  } catch {
+    memoryStore = store;
+  }
 }
 
 function toListItem(dream: Dream): DreamListItem {

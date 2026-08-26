@@ -7,8 +7,13 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const user = await requirePageUser();
-  await ensureSeeded(user.id);
-  const dreams = await dreamRepository.list(user.id);
-
-  return <HomeDashboard userName={user.name} dreams={dreams} />;
+  try {
+    await ensureSeeded(user.id);
+    const dreams = await dreamRepository.list(user.id);
+    return <HomeDashboard userName={user.name} dreams={dreams} />;
+  } catch (error) {
+    console.error("[home] failed to load dreams", error);
+    // Render an empty dashboard rather than a hard 500 when the DB is misconfigured.
+    return <HomeDashboard userName={user.name} dreams={[]} />;
+  }
 }

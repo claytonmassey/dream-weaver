@@ -18,5 +18,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export function usePrisma(): boolean {
-  return Boolean(process.env.DATABASE_URL) && process.env.DEMO_STORE !== "true";
+  if (process.env.DEMO_STORE === "true") return false;
+  // Prefer Postgres whenever a URL is configured (required on Vercel for persistence).
+  return Boolean(process.env.DATABASE_URL);
 }

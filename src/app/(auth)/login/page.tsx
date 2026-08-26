@@ -1,15 +1,22 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const configError = searchParams.get("error") === "config";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    configError
+      ? "Server storage isn’t configured. Set DATABASE_URL and AUTH_SECRET in Vercel."
+      : null,
+  );
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -130,5 +137,13 @@ export default function LoginPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-dvh" />}>
+      <LoginForm />
+    </Suspense>
   );
 }
