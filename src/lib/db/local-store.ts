@@ -247,7 +247,7 @@ export const localDb = {
     userId: string,
     dreamId: string,
     imageUrl: string,
-    status: "ready" | "failed",
+    status: "pending" | "ready" | "failed",
   ): Promise<Dream | null> {
     const store = await ensureStore();
     const dream = store.dreams.find((d) => d.id === dreamId && d.userId === userId);

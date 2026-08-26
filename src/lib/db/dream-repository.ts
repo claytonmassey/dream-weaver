@@ -33,7 +33,7 @@ export const dreamRepository = {
     userId: string,
     dreamId: string,
     imageUrl: string,
-    status: "ready" | "failed",
+    status: "pending" | "ready" | "failed",
   ): Promise<Dream | null> {
     return db().updateDreamImage(userId, dreamId, imageUrl, status);
   },

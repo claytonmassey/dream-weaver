@@ -254,7 +254,7 @@ export const prismaDb = {
     userId: string,
     dreamId: string,
     imageUrl: string,
-    status: "ready" | "failed",
+    status: "pending" | "ready" | "failed",
   ): Promise<Dream | null> {
     const existing = await prisma.dream.findFirst({
       where: { id: dreamId, userId },

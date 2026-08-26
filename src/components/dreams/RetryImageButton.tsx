@@ -39,7 +39,7 @@ export function RetryImageButton({ dreamId }: { dreamId: string }) {
         }}
         className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-medium text-[#1a1612] disabled:opacity-60"
       >
-        {loading ? "Retrying…" : "Retry image"}
+        {loading ? "Starting…" : "Retry image"}
       </button>
       {error ? <p className="text-xs text-[var(--danger)]">{error}</p> : null}
     </div>

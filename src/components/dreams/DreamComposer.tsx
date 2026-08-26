@@ -319,7 +319,6 @@ export function DreamComposer() {
       });
 
       if (!imageRes.ok) {
-        let reason = "1";
         try {
           const errBody = (await imageRes.json()) as { error?: string };
           if (errBody.error) {
@@ -331,10 +330,11 @@ export function DreamComposer() {
         } catch {
           // ignore parse errors
         }
-        router.push(`/dream/${dream.id}?imageFailed=${reason}`);
+        router.push(`/dream/${dream.id}?imageFailed=1`);
         return;
       }
 
+      // Image paints in the background; the dream page polls until ready.
       router.push(`/dream/${dream.id}`);
     } catch {
       setError(
