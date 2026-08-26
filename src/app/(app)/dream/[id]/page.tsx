@@ -1,0 +1,89 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { DreamEventList } from "@/components/dreams/DreamEventList";
+import { DreamHero } from "@/components/dreams/DreamHero";
+import { RetryImageButton } from "@/components/dreams/RetryImageButton";
+import { DeleteDreamButton } from "@/components/dreams/DeleteDreamButton";
+import { dreamRepository } from "@/lib/db/dream-repository";
+import { ensureSeeded } from "@/lib/db/ensure-seed";
+import { localDb } from "@/lib/db/local-store";
+
+export const dynamic = "force-dynamic";
+
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ imageFailed?: string }>;
+};
+
+export default async function DreamDetailPage({ params, searchParams }: Props) {
+  const { id } = await params;
+  const { imageFailed } = await searchParams;
+  const user = await localDb.getOrCreateDemoUser();
+  await ensureSeeded(user.id);
+  const dream = await dreamRepository.get(user.id, id);
+  if (!dream) notFound();
+
+  return (
+    <div className="mx-auto max-w-5xl space-y-12">
+      {(imageFailed || dream.imageStatus === "failed") && (
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--danger)]/30 bg-[var(--bg-elevated)] px-5 py-4">
+          <p className="text-sm text-[var(--text-muted)]">
+            Your dream was saved, but the image couldn&apos;t be created.
+          </p>
+          <RetryImageButton dreamId={dream.id} />
+        </div>
+      )}
+
+      <DreamHero dream={dream} />
+
+      <section className="space-y-4">
+        <h2 className="font-display text-2xl">Your Dream</h2>
+        <p className="max-w-3xl whitespace-pre-wrap text-base leading-relaxed text-[var(--text-muted)]">
+          {dream.cleanedTranscript}
+        </p>
+      </section>
+
+      <section className="space-y-6">
+        <h2 className="font-display text-2xl">Key Moments</h2>
+        <DreamEventList events={dream.events} />
+      </section>
+
+      {(dream.locations.length > 0 ||
+        dream.objects.length > 0 ||
+        dream.people.length > 0) && (
+        <section className="grid gap-6 rounded-[2rem] border border-white/5 bg-[var(--bg-elevated)] p-6 md:grid-cols-3">
+          <div>
+            <h3 className="mb-2 text-xs uppercase tracking-wider text-[var(--text-muted)]">
+              Places
+            </h3>
+            <p className="text-sm">{dream.locations.join(", ") || "—"}</p>
+          </div>
+          <div>
+            <h3 className="mb-2 text-xs uppercase tracking-wider text-[var(--text-muted)]">
+              Objects
+            </h3>
+            <p className="text-sm">{dream.objects.join(", ") || "—"}</p>
+          </div>
+          <div>
+            <h3 className="mb-2 text-xs uppercase tracking-wider text-[var(--text-muted)]">
+              People
+            </h3>
+            <p className="text-sm">
+              {dream.people.map((p) => p.name).join(", ") || "—"}
+            </p>
+          </div>
+        </section>
+      )}
+
+      <div className="flex flex-wrap gap-3 border-t border-white/5 pt-8">
+        <Link
+          href="/timeline"
+          className="rounded-full border border-white/10 px-5 py-2.5 text-sm text-[var(--text-muted)]"
+        >
+          Back to timeline
+        </Link>
+        <DeleteDreamButton dreamId={dream.id} />
+      </div>
+    </div>
+  );
+}
