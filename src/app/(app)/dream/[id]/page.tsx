@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DreamEventList } from "@/components/dreams/DreamEventList";
 import { DreamHero } from "@/components/dreams/DreamHero";
-import { RetryImageButton } from "@/components/dreams/RetryImageButton";
+import { ImageFailedBanner } from "@/components/dreams/ImageFailedBanner";
 import { DeleteDreamButton } from "@/components/dreams/DeleteDreamButton";
 import { requirePageUser } from "@/lib/auth/session";
 import { dreamRepository } from "@/lib/db/dream-repository";
@@ -26,12 +26,7 @@ export default async function DreamDetailPage({ params, searchParams }: Props) {
   return (
     <div className="mx-auto max-w-lg space-y-8 sm:space-y-10 lg:max-w-5xl lg:space-y-12">
       {(imageFailed || dream.imageStatus === "failed") && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-[var(--danger)]/30 bg-[var(--bg-elevated)] px-4 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5">
-          <p className="text-sm text-[var(--text-muted)]">
-            Your dream was saved, but the image couldn&apos;t be created.
-          </p>
-          <RetryImageButton dreamId={dream.id} />
-        </div>
+        <ImageFailedBanner dreamId={dream.id} />
       )}
 
       <DreamHero dream={dream} />

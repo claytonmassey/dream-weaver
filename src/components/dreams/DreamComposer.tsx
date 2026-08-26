@@ -319,7 +319,19 @@ export function DreamComposer() {
       });
 
       if (!imageRes.ok) {
-        router.push(`/dream/${dream.id}?imageFailed=1`);
+        let reason = "1";
+        try {
+          const errBody = (await imageRes.json()) as { error?: string };
+          if (errBody.error) {
+            sessionStorage.setItem(
+              `dream-image-error:${dream.id}`,
+              errBody.error,
+            );
+          }
+        } catch {
+          // ignore parse errors
+        }
+        router.push(`/dream/${dream.id}?imageFailed=${reason}`);
         return;
       }
 

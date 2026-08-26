@@ -107,5 +107,11 @@ export function getStorageProvider(): StorageProvider {
   if (useVercelBlob()) {
     return new VercelBlobStorageProvider(blobToken());
   }
+  // Vercel’s filesystem is read-only — local uploads only work in development.
+  if (process.env.VERCEL === "1") {
+    throw new Error(
+      "Image storage isn’t configured. Create a Vercel Blob store and set BLOB_READ_WRITE_TOKEN.",
+    );
+  }
   return new LocalStorageProvider();
 }
